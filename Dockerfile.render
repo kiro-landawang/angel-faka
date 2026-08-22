@@ -1,0 +1,30 @@
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/g' prisma/schema.prisma
+RUN npx prisma generate
+RUN npm run build
+RUN chmod +x render-entrypoint.sh
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=10000
+RUN apk add --no-cache openssl && npm install -g prisma@5.22.0 && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/render-entrypoint.sh ./render-entrypoint.sh
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+USER nextjs
+EXPOSE 10000
+CMD ["./render-entrypoint.sh"]

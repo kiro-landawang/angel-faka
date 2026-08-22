@@ -1,0 +1,14 @@
+node_modules
+.next
+.next_*
+.env
+.env.*
+!.env.production.example
+*.db
+*.db.*
+*.db-journal
+*.db-*
+tsconfig.tsbuildinfo
+yarn.lock
+prisma/schema.netlify-stage.prisma
+

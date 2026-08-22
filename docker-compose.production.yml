@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: angel-faka-app
+    restart: unless-stopped
+    env_file: .env.production
+    expose:
+      - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: mysql:8.0.36
+    container_name: angel-faka-db
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    env_file: .env.production
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    expose:
+      - "3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  purge:
+    build: .
+    container_name: angel-faka-purge
+    restart: unless-stopped
+    env_file: .env.production
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["while true; do wget -qO- --header=Authorization:Bearer\\ $$RETENTION_PURGE_TOKEN --post-data='' http://app:3000/api/internal/retention >/dev/null || true; sleep 86400; done"]
+    depends_on:
+      - app
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mysql_data:
+
+networks:
+  internal:
+    driver: bridge

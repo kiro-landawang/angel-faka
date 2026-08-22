@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: angel-faka
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_URL
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RETENTION_PURGE_TOKEN
+        generateValue: true
+      - key: COOKIE_NAME
+        value: angel_faka_admin_session
+      - key: MERCHANT_COOKIE_NAME
+        value: angel_faka_merchant_session
+      - key: ENABLE_SECURE_COOKIE
+        value: "true"
+      - key: LOG_LEVEL
+        value: warn
+      - key: EPAY_ENABLED
+        value: "false"
+      - key: RESEND_ENABLED
+        value: "false"
