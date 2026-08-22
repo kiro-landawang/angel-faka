@@ -9,8 +9,8 @@ export async function POST(req: Request) {
     const result = await merchantLogin(username, password);
 
     if (result.ok) return NextResponse.json({ success: true, merchant: result.merchant });
-    if (result.reason === "PENDING") return NextResponse.json({ error: "账号正在等待平台审核" }, { status: 403 });
-    if (result.reason === "REJECTED") return NextResponse.json({ error: "账号审核未通过" }, { status: 403 });
+    if (result.reason === "PENDING") return NextResponse.json({ error: "账号暂不可用，请联系平台管理员" }, { status: 403 });
+    if (result.reason === "REJECTED") return NextResponse.json({ error: "账号已被平台停用" }, { status: 403 });
     if (result.reason === "SUSPENDED") return NextResponse.json({ error: "账号已被暂停" }, { status: 403 });
     return NextResponse.json({ error: "账号或密码错误" }, { status: 401 });
   } catch {

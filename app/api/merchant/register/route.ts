@@ -18,8 +18,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "账号、店铺名称或店铺标识格式不正确" }, { status: 400 });
     }
 
-    await registerMerchant({ username, password, name, slug });
-    return NextResponse.json({ success: true, status: "PENDING" });
+    const merchant = await registerMerchant({ username, password, name, slug });
+    return NextResponse.json({ success: true, status: "APPROVED", merchant, redirect: "/merchant/login" });
   } catch (error: any) {
     if (error?.code === "P2002") {
       return NextResponse.json({ error: "账号或店铺标识已存在" }, { status: 409 });

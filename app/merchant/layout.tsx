@@ -19,9 +19,9 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   ] as const;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground dark md:flex-row">
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-background md:flex">
-        <div className="flex h-14 items-center border-b px-6 text-lg font-bold">商户后台</div>
+    <div className="flex min-h-screen flex-col overflow-hidden bg-background text-foreground dark md:flex-row">
+      <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/70 md:flex">
+        <div className="flex h-16 items-center border-b px-6"><div><p className="text-xs font-medium uppercase tracking-wider text-primary">GeekFaka</p><p className="text-lg font-bold">商户工作台</p></div></div>
         <div className="border-b px-6 py-3">
           <p className="truncate text-sm font-medium">{merchant.name}</p>
           <p className="truncate text-xs text-muted-foreground">ID：{merchant.id}</p>
@@ -29,7 +29,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
         <nav className="flex-1 space-y-1 overflow-y-auto p-4">
           {links.map(([href, label, Icon]) => (
             <Link key={href} href={href}>
-              <Button variant="ghost" className="w-full justify-start">
+              <Button variant="ghost" className="w-full justify-start rounded-lg py-5 text-muted-foreground hover:bg-primary/10 hover:text-primary">
                 <Icon className="mr-2 h-4 w-4" />{label}
               </Button>
             </Link>
@@ -44,7 +44,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
           </a>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+      <main className="flex-1 overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">{children}</main>
     </div>
   );
 }

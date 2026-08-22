@@ -39,8 +39,8 @@ export async function PATCH(
       if ((resalePrice !== null && (!Number.isFinite(resalePrice) || resalePrice < 0)) || (resaleMinPrice !== null && (!Number.isFinite(resaleMinPrice) || resaleMinPrice < 0))) {
         return NextResponse.json({ error: "分销价格无效" }, { status: 400 });
       }
-      if (resalePrice !== null && resaleMinPrice !== null && resalePrice < resaleMinPrice) {
-        return NextResponse.json({ error: "对接价不能低于对外控价" }, { status: 400 });
+      if (resalePrice !== null && resaleMinPrice !== null && resalePrice > resaleMinPrice) {
+        return NextResponse.json({ error: "对接价不能高于对外控价" }, { status: 400 });
       }
       data.resalePrice = resalePrice;
       data.resaleMinPrice = resaleMinPrice;
