@@ -61,13 +61,13 @@ export default function AdminLogin() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-3">
-            <Input type="text" placeholder="管理员账号" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
-            <Input type="password" placeholder="管理员密码" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-            <Input type="password" placeholder="认证令牌" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} autoComplete="one-time-code" />
+            <Input type="text" placeholder="管理员账号" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required />
+            <Input type="password" placeholder="管理员密码" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
+            <Input type="password" placeholder="认证令牌" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} autoComplete="one-time-code" required />
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>
           <CardFooter>
-            <Button className="w-full" disabled={!username || !password || !accessToken || loading}>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               登录
             </Button>

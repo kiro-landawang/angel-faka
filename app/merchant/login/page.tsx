@@ -104,7 +104,7 @@ export default function MerchantLoginPage() {
               <Input type="password" placeholder="密码" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
               {error && <p className="text-sm text-destructive">{error}</p>}
               {message && <p className="text-sm text-emerald-600">{message}</p>}
-              <Button className="w-full" disabled={loading || !username || !password}>{loading ? "登录中..." : "登录商户后台"}</Button>
+              <Button type="submit" className="w-full" disabled={loading}>{loading ? "登录中..." : "登录商户后台"}</Button>
               <p className="text-center text-sm text-muted-foreground">
                 没有账号？ <button type="button" className="font-medium text-primary underline-offset-4 hover:underline" onClick={() => switchMode("register")}>立即注册</button>
               </p>
