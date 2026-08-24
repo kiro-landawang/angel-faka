@@ -23,14 +23,12 @@ export default async function RootLayout({
     });
     crispId = setting?.value;
   } catch (error) {
-    // Suppress errors during build time or if DB is unreachable
-    // This allows the build to pass even if DATABASE_URL is missing in the build environment
     console.warn("Failed to fetch crisp_id (likely during build):", error);
   }
 
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>
+    <html lang="zh-CN">
+      <body className={`${inter.className} bg-background text-foreground`} style={{ fontFamily: 'Inter, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif' }}>
         {children}
         <CustomerService crispId={crispId} />
       </body>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { StoreFront } from "@/components/store-front";
 import { Navbar } from "@/components/navbar";
+import { StoreFooter } from "@/components/store-footer";
 
 export const dynamic = "force-dynamic";
 
@@ -45,5 +46,18 @@ export default async function MerchantShopPage({ params }: { params: { slug: str
     })),
   }));
 
-  return <main className="min-h-screen bg-background dark text-foreground"><Navbar /><div className="container mx-auto max-w-6xl px-4 pt-8"><h1 className="text-2xl font-bold">{merchant.name}</h1><p className="mt-1 text-sm text-muted-foreground">店铺商品</p></div><section className="container mx-auto max-w-6xl px-4 py-8"><StoreFront categories={categories} /></section></main>;
+  return (
+    <main className="flex min-h-screen flex-col bg-background text-foreground">
+      <Navbar />
+      <div className="mx-auto w-full max-w-3xl px-5 pt-8">
+        <p className="text-xs text-muted-foreground">独立店铺</p>
+        <h1 className="mt-2 text-3xl font-medium tracking-tight">{merchant.name}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">支付完成立即发卡</p>
+        <div className="mt-8">
+          <StoreFront categories={categories} featured />
+        </div>
+      </div>
+      <StoreFooter />
+    </main>
+  );
 }

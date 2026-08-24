@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Loader2, Calendar, ChevronRight } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 
 export function OrderLookup() {
@@ -33,12 +32,7 @@ export function OrderLookup() {
     try {
       const res = await fetch(`/api/orders/query?q=${encodeURIComponent(query.trim())}`)
       const data = await res.json()
-      
-      if (Array.isArray(data)) {
-        setResults(data)
-      } else {
-        setResults([])
-      }
+      setResults(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error(error)
     } finally {
@@ -48,87 +42,72 @@ export function OrderLookup() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleString("zh-CN", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     })
   }
 
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case "PAID": return <Badge className="bg-green-500 hover:bg-green-600 px-1.5 py-0 text-[10px] h-5">已支付</Badge>
-      case "PENDING": return <Badge variant="secondary" className="text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 px-1.5 py-0 text-[10px] h-5">待支付</Badge>
-      case "EXPIRED": return <Badge variant="destructive" className="px-1.5 py-0 text-[10px] h-5">已过期</Badge>
-      default: return <Badge variant="outline" className="px-1.5 py-0 text-[10px] h-5">{status}</Badge>
-    }
+  const statusLabel = (status: string) => {
+    if (status === "PAID") return { text: "已支付", className: "bg-[#EAF3DE] text-[#3B6D11]" }
+    if (status === "PENDING") return { text: "待支付", className: "bg-[#FAEEDA] text-[#854F0B]" }
+    if (status === "EXPIRED") return { text: "已过期", className: "bg-secondary text-muted-foreground" }
+    return { text: status, className: "bg-secondary text-muted-foreground" }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all shadow-sm">
-          <Search className="h-4 w-4 text-primary" />
-          <span className="font-bold">查询订单</span>
-        </Button>
+        <button type="button" className="text-[13px] text-muted-foreground transition-colors hover:text-foreground">
+          订单
+        </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>订单查询</DialogTitle>
-          <DialogDescription>
-            输入下单时填写的联系方式（邮箱/QQ/手机号）或订单号查询。
-          </DialogDescription>
+      <DialogContent className="border-none bg-[#F6F6F4] p-0 sm:max-w-lg sm:rounded-3xl">
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle className="text-xl font-medium tracking-tight">查找订单</DialogTitle>
+          <DialogDescription>输入邮箱、手机号或订单号</DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSearch} className="flex gap-2 mt-2">
-          <Input 
-            placeholder="联系方式 / 订单号" 
-            value={query} 
-            onChange={e => setQuery(e.target.value)}
+
+        <form onSubmit={handleSearch} className="flex gap-2 px-6">
+          <Input
+            placeholder="联系方式 / 订单号"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-11 rounded-xl border-none bg-white shadow-none"
           />
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="h-11 rounded-xl px-5">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "查询"}
           </Button>
         </form>
 
-        <div className="mt-4">
+        <div className="max-h-[50vh] space-y-2 overflow-y-auto px-6 pb-6">
           {hasSearched && results.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground border border-dashed rounded-lg">
-              <p>未找到相关订单</p>
+            <div className="rounded-2xl bg-white px-4 py-10 text-center text-sm text-muted-foreground">
+              未找到相关订单
             </div>
           )}
 
-          {results.length > 0 && (
-            <div className="max-h-[50vh] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-              {results.map((order) => (
-                <Link 
-                  key={order.orderNo} 
-                  href={`/orders/${order.orderNo}`}
-                  onClick={() => setOpen(false)}
-                  className="block group"
-                >
-                  <div className="border rounded-lg p-3 hover:bg-accent/50 transition-colors flex items-center justify-between">
-                      <div className="space-y-2 flex-1 mr-4">
-                        <div className="font-bold text-sm leading-tight text-foreground/90">
-                          {order.product.name}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                          {getStatusBadge(order.status)}
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" /> {formatDate(order.createdAt)}
-                          </span>
-                          <span className="font-mono font-medium text-foreground">
-                            ¥{Number(order.totalAmount).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+          {results.map((order) => {
+            const badge = statusLabel(order.status)
+            return (
+              <Link
+                key={order.orderNo}
+                href={`/orders/${order.orderNo}`}
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-between rounded-2xl bg-white px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-medium">{order.product.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {formatDate(order.createdAt)} · ¥{Number(order.totalAmount).toFixed(2)}
+                  </p>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-xs ${badge.className}`}>{badge.text}</span>
+              </Link>
+            )
+          })}
         </div>
       </DialogContent>
     </Dialog>
