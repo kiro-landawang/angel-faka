@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Netlify Next.js Runtime 会自动处理输出；standalone 模式用于本地/Vercel Docker 部署
-  output: process.env.NETLIFY ? undefined : "standalone",
+  // 不使用 standalone 输出：Vercel/Netlify 各自的 Next.js Runtime 会自行处理动态路由。
+  // standalone 仅在自托管 Docker 时需要，启用它会导致 Vercel 上的客户端动态页面（如 /orders/[orderNo]）返回 404。
   poweredByHeader: false,
   async headers() {
     return [
