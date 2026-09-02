@@ -160,7 +160,7 @@ export function StoreFront({
           email,
           paymentMethod: selected?.provider || "dummy",
           couponCode: appliedCoupon?.code,
-          options: { channel: paymentMethod === "wechat" ? "wxpay" : paymentMethod },
+          options: { channel: paymentMethod },
         }),
       })
       const data = await res.json()

@@ -17,6 +17,13 @@ const settings = [
   ['site_url', 'http://localhost:3000'],
   ['epay_enabled', 'false'],
   ['epay_channels', 'alipay,wxpay'],
+  ['mianqian_enabled', 'true'],
+  ['mianqian_channels', 'alipay,wxpay'],
+  ['mianqian_fee', '0'],
+  ['mianqian_token', ''],
+  ['mianqian_qr_alipay', '/qr-codes/alipay.png'],
+  ['mianqian_qr_wechat', '/qr-codes/wechat.png'],
+  ['mianqian_qr_qqpay', '/qr-codes/qqpay.png'],
   ['resend_enabled', 'false'],
 ]
 

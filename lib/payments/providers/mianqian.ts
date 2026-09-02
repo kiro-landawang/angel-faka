@@ -105,7 +105,13 @@ export class MianQianProvider implements PaymentAdapter {
   /** 返回指定通道的收款码图片地址（供订单页展示） */
   async getQrUrl(channel: string): Promise<string> {
     await this.loadConfig();
-    return this.qrUrls[channel] || this.qrUrls.alipay || this.qrUrls.wxpay || "";
+    // 若后台未填写收款码地址，自动 fallback 到项目内 public/qr-codes/ 下的静态文件
+    const fallbackMap: Record<string, string> = {
+      alipay: "/qr-codes/alipay.png",
+      wxpay: "/qr-codes/wechat.png",
+      qqpay: "/qr-codes/qqpay.png",
+    };
+    return this.qrUrls[channel] || fallbackMap[channel] || this.qrUrls.alipay || this.qrUrls.wxpay || "";
   }
 
   async createPayment(
