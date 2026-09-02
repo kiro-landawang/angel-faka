@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  // Netlify Next.js Runtime 会自动处理输出；standalone 模式用于本地/Vercel Docker 部署
+  output: process.env.NETLIFY ? undefined : "standalone",
   poweredByHeader: false,
   async headers() {
     return [
