@@ -129,7 +129,11 @@ export class MianQianProvider implements PaymentAdapter {
     const channel = options?.channel || "alipay";
     const qrCode = await this.getQrUrl(channel);
 
-    const payUrl = `${this.siteUrl}/orders/${orderNo}?ch=${channel}`;
+    // 优先使用下单请求的实际域名拼接回跳地址（由 orders/create 路由从请求头注入），
+    // 这样无论站点部署在 Vercel 还是 Netlify，payUrl 都指向「真正能处理该请求的站点」，
+    // 避免死守数据库里可能已过期的 site_url 导致跳到坏域名、收款码拉不到。
+    const baseUrl = (options && (options as any).baseUrl) || this.siteUrl;
+    const payUrl = `${baseUrl}/orders/${orderNo}?ch=${channel}`;
 
     log.info({ orderNo, amount, channel }, "MianQian payment created (show personal QR)");
 

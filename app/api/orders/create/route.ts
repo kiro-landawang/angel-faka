@@ -10,6 +10,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { productId, quantity = 1, email, paymentMethod = "epay", couponCode, options } = body;
 
+    // 从请求头推导当前站点真实域名，注入给支付适配器用于拼接回跳地址（payUrl）。
+    // 这样在 Vercel / Netlify 等多部署环境下，payUrl 永远指向真正处理该请求的站点。
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+    const baseUrl = host ? `${proto}://${host}` : "";
+
     log.info({ productId, quantity, paymentMethod: paymentMethod || "none" }, "Order creation attempt");
 
     if (!productId || !email) {
@@ -125,7 +131,7 @@ export async function POST(req: Request) {
         orderNo, 
         totalAmount, 
         `${product.name} x${quantity}`,
-        options
+        { ...(options || {}), baseUrl }
       );
       
       log.info({ orderNo }, "Payment initiated");
