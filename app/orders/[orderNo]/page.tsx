@@ -9,9 +9,6 @@ import { useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import React from "react"
 
-// 强制动态渲染：避免 Vercel 在构建期静态预渲染该动态客户端页面导致返回 404
-export const dynamic = "force-dynamic"
-
 interface Order {
   id: string
   orderNo: string
