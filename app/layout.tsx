@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { prisma } from "@/lib/prisma";
 import { CustomerService } from "@/components/customer-service";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ANGEL旗舰 - 自动发货平台",
@@ -28,7 +25,7 @@ export default async function RootLayout({
 
   return (
     <html lang="zh-CN">
-      <body className={`${inter.className} bg-background text-foreground`} style={{ fontFamily: 'Inter, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif' }}>
+      <body className="bg-background text-foreground" style={{ fontFamily: 'Inter, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif' }}>
         {children}
         <CustomerService crispId={crispId} />
       </body>

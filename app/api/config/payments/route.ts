@@ -9,7 +9,8 @@ export async function GET() {
     where: {
       key: { in: [
         "epay_enabled", "epay_channels", "epay_fee",
-        "codepay_enabled", "codepay_channels", "codepay_fee"
+        "codepay_enabled", "codepay_channels", "codepay_fee",
+        "mianqian_enabled", "mianqian_channels", "mianqian_fee"
       ] }
     }
   });
@@ -53,6 +54,22 @@ export async function GET() {
     }
     if (enabledSubChannels.includes("usdt")) {
       channels.push({ id: "usdt", name: "USDT", icon: "credit-card", provider: "epay", fee });
+    }
+  }
+
+  // 站内免签（个人收款码 / 码支付）
+  if (config.mianqian_enabled === "true") {
+    const fee = parseFloat(config.mianqian_fee || "0");
+    const enabledSubChannels = (config.mianqian_channels || "alipay,wxpay").split(",");
+
+    if (enabledSubChannels.includes("alipay")) {
+      channels.push({ id: "alipay", name: "支付宝（个人码）", icon: "wallet", provider: "mianqian", fee });
+    }
+    if (enabledSubChannels.includes("wxpay")) {
+      channels.push({ id: "wxpay", name: "微信（个人码）", icon: "credit-card", provider: "mianqian", fee });
+    }
+    if (enabledSubChannels.includes("qqpay")) {
+      channels.push({ id: "qqpay", name: "QQ钱包（个人码）", icon: "wallet", provider: "mianqian", fee });
     }
   }
 

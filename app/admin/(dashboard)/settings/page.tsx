@@ -30,8 +30,23 @@ const CODEPAY_SUB_CHANNELS = [
   { id: "qqpay", label: "QQ钱包" },
 ]
 
+// Define available sub-channels for 站内免签（个人码）
+const MIANQIAN_SUB_CHANNELS = [
+  { id: "alipay", label: "支付宝（个人码）" },
+  { id: "wxpay", label: "微信（个人码）" },
+  { id: "qqpay", label: "QQ钱包（个人码）" },
+]
+
 // Define available providers metadata
 const PROVIDERS = [
+  {
+    id: "mianqian",
+    name: "站内免签（个人码 / 码支付）",
+    description: "零成本、不经第三方：上传你的微信/支付宝个人收款码，顾客扫码付款后由手机监听自动发货",
+    icon: CreditCard,
+    statusKey: "mianqian_token",
+    enabledKey: "mianqian_enabled"
+  },
   {
     id: "codepay",
     name: "码支付 (CodePay)",
@@ -589,6 +604,118 @@ export default function SettingsPage() {
                   />
                 </div>
               )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedProvider(null)}>取消</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              保存配置
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 站内免签（个人码）Configuration Dialog */}
+      <Dialog open={selectedProvider === "mianqian"} onOpenChange={(open) => !open && setSelectedProvider(null)}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>配置站内免签（个人收款码 / 码支付）</DialogTitle>
+            <DialogDescription>
+              零成本个人免签：上传你的微信/支付宝个人收款码，顾客扫码付款后由手机端监听 App 通知本站自动发货。资金直接进你个人账户，不经任何第三方。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/20">
+                <div className="space-y-0.5">
+                  <Label className="text-base">启用此支付渠道</Label>
+                  <p className="text-xs text-muted-foreground">关闭后前台将不可见</p>
+                </div>
+                <Switch
+                  checked={draftConfig.mianqian_enabled === "true"}
+                  onCheckedChange={(checked) => handleChange("mianqian_enabled", String(checked))}
+                />
+              </div>
+
+              <div className="grid gap-3 border rounded-lg p-4">
+                <Label>启用的收款方式</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {MIANQIAN_SUB_CHANNELS.map((sub) => {
+                    const currentChannels = (draftConfig.mianqian_channels || "alipay,wxpay").split(",").filter(Boolean);
+                    const isChecked = currentChannels.includes(sub.id);
+
+                    return (
+                      <div key={sub.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`mq-chan-${sub.id}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            let newChannels;
+                            if (checked) {
+                              newChannels = [...currentChannels, sub.id];
+                            } else {
+                              newChannels = currentChannels.filter(c => c !== sub.id);
+                            }
+                            handleChange("mianqian_channels", newChannels.join(","));
+                          }}
+                        />
+                        <Label htmlFor={`mq-chan-${sub.id}`} className="font-normal cursor-pointer">
+                          {sub.label}
+                        </Label>
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">勾选你已上传收款码的渠道。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>通信密钥 (Token)</Label>
+                <Input
+                  type="password"
+                  placeholder="自定义一段字符串，例如：abc123xyz"
+                  value={draftConfig.mianqian_token || ""}
+                  onChange={e => handleChange("mianqian_token", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">手机端监听 App 回调本站时需要用它签名（MD5(amount+token)），随便设一段只有你知道的字符串即可，不会明文传输。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>支付宝收款码图片地址</Label>
+                <Input
+                  placeholder="https://你的图床/ali.png"
+                  value={draftConfig.mianqian_qr_alipay || ""}
+                  onChange={e => handleChange("mianqian_qr_alipay", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">你的支付宝「个人收款码」截图后上传到任意图床（或本站后台「站点设置」可放外链），填图片直链。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>微信收款码图片地址</Label>
+                <Input
+                  placeholder="https://你的图床/wx.png"
+                  value={draftConfig.mianqian_qr_wechat || ""}
+                  onChange={e => handleChange("mianqian_qr_wechat", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">你的微信「二维码收款」截图直链。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>QQ钱包收款码图片地址（可选）</Label>
+                <Input
+                  placeholder="https://你的图床/qq.png"
+                  value={draftConfig.mianqian_qr_qqpay || ""}
+                  onChange={e => handleChange("mianqian_qr_qqpay", e.target.value)}
+                />
+              </div>
+
+              <div className="rounded-lg border bg-muted/20 p-3 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">手机端监听设置（关键一步）：</p>
+                <p>1. 在安卓手机安装一个「通知转发器 / 短信转发器」类 App（如「通知滤盒」「短信转发器」）。</p>
+                <p>2. 配置规则：当收到微信/支付宝的收款通知时，自动 POST 到<br/>
+                  <code className="text-foreground">https://kiro.pdan.top/api/payments/mianqian/notify</code></p>
+                <p>3. 提交参数：<code className="text-foreground">amount=实际到账金额</code> 、 <code className="text-foreground">type=alipay或wxpay</code> 、 <code className="text-foreground">sign=MD5(amount+通信密钥)</code></p>
+                <p>4. 付款后系统按金额自动匹配订单并发货。</p>
+              </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedProvider(null)}>取消</Button>

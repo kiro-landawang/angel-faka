@@ -17,6 +17,7 @@ interface Order {
   status: string
   quantity: number
   paidAt: any
+  paymentMethod: string
   product: {
     name: string
     deliveryFormat: string
@@ -153,6 +154,7 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [qrCode, setQrCode] = useState<string>("")
 
   const fetchOrder = async () => {
     try {
@@ -160,6 +162,14 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
       if (res.ok) {
         const data = await res.json()
         setOrder(data)
+        // 免签（个人码）支付：拉取对应通道的收款码
+        if (data.paymentMethod === "mianqian") {
+          const ch = searchParams.get("ch") || "alipay"
+          fetch(`/api/payments/mianqian/qr?ch=${ch}`)
+            .then((r) => r.json())
+            .then((j) => setQrCode(j.qrCode || ""))
+            .catch(() => {})
+        }
       }
     } catch (error) {
       console.error(error)
@@ -275,8 +285,25 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
 
         {order.status === "PENDING" && !isExpired && (
           <div className="mt-6 rounded-2xl bg-white px-5 py-6 text-center">
-            <p className="text-sm font-medium">付款完成后请不要关闭此页面</p>
-            <p className="mt-2 text-xs text-muted-foreground">系统确认支付后会自动展示卡密。</p>
+            {order.paymentMethod === "mianqian" && qrCode ? (
+              <div className="space-y-4">
+                <p className="text-sm font-medium">请使用微信 / 支付宝扫码付款</p>
+                <div className="mx-auto w-52 rounded-2xl border border-[#ECECEC] bg-white p-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrCode} alt="收款码" className="h-44 w-44 mx-auto object-contain" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  应付金额 <span className="font-medium text-foreground">¥{Number(order.totalAmount).toFixed(2)}</span>
+                  ，付款后系统自动到账发货。
+                </p>
+                <p className="text-xs text-muted-foreground">付款完成后可点击下方按钮刷新状态。</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">付款完成后请不要关闭此页面</p>
+                <p className="text-xs text-muted-foreground">系统确认支付后会自动展示卡密。</p>
+              </div>
+            )}
             <Button
               className="mt-5 h-11 w-full rounded-full"
               variant="secondary"

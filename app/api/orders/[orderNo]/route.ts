@@ -28,7 +28,7 @@ export async function GET(
     if (order.status !== "PAID") {
       // Create a sanitized order object without licenses
       const { licenses, ...safeOrder } = order;
-      return NextResponse.json({ ...safeOrder, licenses: [] });
+      return NextResponse.json({ ...safeOrder, paymentMethod: order.paymentMethod, licenses: [] });
     }
 
     return NextResponse.json(order);
