@@ -5,7 +5,9 @@ import { Announcement } from "@/components/announcement";
 import { StoreFooter } from "@/components/store-footer";
 import { getDefaultMerchantId } from "@/lib/platform-merchant";
 
-export const dynamic = "force-dynamic";
+// Cache the catalog HTML for 30s (ISR) so Vercel serves it from CDN instead of
+// running a DB query on every request — much faster first paint / time-to-interactive.
+export const revalidate = 30;
 
 export default async function Home() {
   let categoriesData: any[] = [];

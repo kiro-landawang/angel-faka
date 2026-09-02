@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback, memo } from "react"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -8,7 +9,10 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2, Minus, Plus, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import ReactMarkdown from "react-markdown"
+
+// Lazy-load the heavy markdown renderer so it stays out of the initial bundle
+// and is only parsed on demand (when a described product's dialog opens).
+const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
 interface Product {
   id: string
@@ -31,6 +35,61 @@ interface PaymentChannel {
   provider: string
   fee?: number
 }
+
+// Memoized so clicking a tab / typing in the dialog doesn't re-render every row.
+const CategoryTab = memo(function CategoryTab({
+  category,
+  active,
+  onSelect,
+}: {
+  category: Category
+  active: boolean
+  onSelect: (id: string) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(category.id)}
+      className={cn(
+        "rounded-full px-4 py-2 text-xs",
+        active ? "bg-primary text-primary-foreground" : "bg-white text-muted-foreground"
+      )}
+    >
+      {category.name}
+    </button>
+  )
+})
+
+const ProductRow = memo(function ProductRow({
+  product,
+  onBuy,
+}: {
+  product: Product
+  onBuy: (p: Product) => void
+}) {
+  return (
+    <button
+      type="button"
+      disabled={product.stock <= 0}
+      onClick={() => onBuy(product)}
+      className={cn(
+        "flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 text-left",
+        product.stock <= 0 && "opacity-45"
+      )}
+    >
+      <div>
+        <p className="text-[15px] font-medium">{product.name}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {product.stock > 0 ? `库存 ${product.stock} · 自动发货` : "暂时缺货"}
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="text-base font-medium">¥{Number(product.price).toFixed(2)}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{product.stock > 0 ? "购买" : "售罄"}</p>
+      </div>
+    </button>
+  )
+})
 
 export function StoreFront({
   categories,
@@ -57,13 +116,20 @@ export function StoreFront({
   } | null>(null)
   const [couponError, setCouponError] = useState("")
 
-  const allProducts = categories.flatMap((category) => category.products)
-  const featuredProduct = [...allProducts].sort((a, b) => {
-    if (a.stock > 0 && b.stock <= 0) return -1
-    if (a.stock <= 0 && b.stock > 0) return 1
-    return Number(b.price) - Number(a.price)
-  })[0]
-  const currentCategory = categories.find((category) => category.id === activeCategory) ?? categories[0]
+  const allProducts = useMemo(() => categories.flatMap((category) => category.products), [categories])
+  const featuredProduct = useMemo(
+    () =>
+      [...allProducts].sort((a, b) => {
+        if (a.stock > 0 && b.stock <= 0) return -1
+        if (a.stock <= 0 && b.stock > 0) return 1
+        return Number(b.price) - Number(a.price)
+      })[0],
+    [allProducts]
+  )
+  const currentCategory = useMemo(
+    () => categories.find((category) => category.id === activeCategory) ?? categories[0],
+    [categories, activeCategory]
+  )
   const shelfProducts = currentCategory?.products ?? []
   const selectedChannel = channels.find((channel) => channel.id === paymentMethod)
   const subtotal = selectedProduct ? Number(selectedProduct.price) * quantity : 0
@@ -128,12 +194,12 @@ export function StoreFront({
     }
   }
 
-  const handleBuyClick = (product: Product) => {
+  const handleBuyClick = useCallback((product: Product) => {
     if (product.stock <= 0) return
     setSelectedProduct(product)
     setQuantity(1)
     setIsBuyOpen(true)
-  }
+  }, [])
 
   const handlePurchase = async () => {
     if (!selectedProduct) return
@@ -225,43 +291,18 @@ export function StoreFront({
 
       <div className="mb-5 flex flex-wrap gap-2">
         {categories.map((category) => (
-          <button
+          <CategoryTab
             key={category.id}
-            type="button"
-            onClick={() => setActiveCategory(category.id)}
-            className={cn(
-              "rounded-full px-4 py-2 text-xs",
-              activeCategory === category.id ? "bg-primary text-primary-foreground" : "bg-white text-muted-foreground"
-            )}
-          >
-            {category.name}
-          </button>
+            category={category}
+            active={activeCategory === category.id}
+            onSelect={setActiveCategory}
+          />
         ))}
       </div>
 
       <div className="space-y-3">
         {shelfProducts.map((product) => (
-          <button
-            key={product.id}
-            type="button"
-            disabled={product.stock <= 0}
-            onClick={() => handleBuyClick(product)}
-            className={cn(
-              "flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 text-left",
-              product.stock <= 0 && "opacity-45"
-            )}
-          >
-            <div>
-              <p className="text-[15px] font-medium">{product.name}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {product.stock > 0 ? `库存 ${product.stock} · 自动发货` : "暂时缺货"}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-base font-medium">¥{Number(product.price).toFixed(2)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{product.stock > 0 ? "购买" : "售罄"}</p>
-            </div>
-          </button>
+          <ProductRow key={product.id} product={product} onBuy={handleBuyClick} />
         ))}
       </div>
 
