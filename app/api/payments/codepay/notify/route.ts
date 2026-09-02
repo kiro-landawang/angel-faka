@@ -12,8 +12,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   // 码支付异步通知为 POST 表单
-  const formData = await req.formData();
-  const data = Object.fromEntries(formData.entries());
+  let data: Record<string, any> = {};
+  try {
+    const formData = await req.formData();
+    data = Object.fromEntries(formData.entries());
+  } catch {
+    // 空请求体或非表单内容时退化为读取查询参数
+    const { searchParams } = new URL(req.url);
+    data = Object.fromEntries(searchParams.entries());
+  }
   return processNotification(data, req);
 }
 
