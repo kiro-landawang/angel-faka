@@ -60,7 +60,10 @@ export async function login(username: string, password: string) {
   const validUsername = process.env.ADMIN_USERNAME || usernameSetting?.value || "admin";
   const validPassword = process.env.ADMIN_PASSWORD || passwordSetting?.value;
 
-  if (username === validUsername && await verifyPassword(password, validPassword)) {
+  // Allow both the configured username and a fallback "admin" login to avoid input issues
+  const allowedUsernames = Array.from(new Set([validUsername, "admin"]));
+
+  if (allowedUsernames.includes(username) && await verifyPassword(password, validPassword)) {
     // Generate JWT - We remove internal expiration and rely on Cookie maxAge for session management.
     // This is more robust against time synchronization issues.
     const token = await new SignJWT({ role: "admin" })
