@@ -45,8 +45,8 @@ export async function POST(req: Request) {
     const success = await login(normalizedUsername, password);
     if (success) return NextResponse.json({ success: true });
     return NextResponse.json({ error: "账号或密码错误" }, { status: 401 });
-  } catch (e: any) {
-    return NextResponse.json({ error: "登录失败", detail: String(e?.message ?? e), stack: String(e?.stack ?? "").slice(0, 600) }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "登录失败" }, { status: 500 });
   }
 }
 
