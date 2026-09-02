@@ -287,10 +287,10 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
           <div className="mt-6 rounded-2xl bg-white px-5 py-6 text-center">
             {order.paymentMethod === "mianqian" && qrCode ? (
               <div className="space-y-4">
-                <p className="text-sm font-medium">请使用微信 / 支付宝扫码付款</p>
-                <div className="mx-auto w-52 rounded-2xl border border-[#ECECEC] bg-white p-3">
+                <p className="text-sm font-medium">请使用支付宝扫码付款</p>
+                <div className="w-full max-w-md mx-auto rounded-2xl border border-[#ECECEC] bg-white p-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={qrCode} alt="收款码" className="h-44 w-44 mx-auto object-contain" />
+                  <img src={qrCode} alt="支付宝收款码" className="w-full max-w-[400px] mx-auto object-contain" />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   应付金额 <span className="font-medium text-foreground">¥{Number(order.totalAmount).toFixed(2)}</span>
