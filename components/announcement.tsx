@@ -39,10 +39,13 @@ export function Announcement({ content }: AnnouncementProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mx-auto mb-6 flex w-full max-w-3xl items-center justify-between rounded-full bg-white px-4 py-2 text-left text-xs text-muted-foreground"
+        className="mx-auto mb-6 flex w-full max-w-3xl items-center justify-between rounded-full bg-gradient-to-r from-[#ffe3ee] to-[#ffc4dd] px-4 py-2 text-left text-xs text-[#993556] shadow-sm"
       >
-        <span className="truncate">公告：支付完成立即发卡</span>
-        <span className="shrink-0 text-foreground">查看</span>
+        <span className="flex items-center gap-1.5 truncate">
+          <span aria-hidden>📢</span>
+          <span className="truncate">公告：支付完成立即发卡</span>
+        </span>
+        <span className="shrink-0 font-medium text-[#d65b7e]">查看</span>
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
