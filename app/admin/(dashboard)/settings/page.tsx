@@ -23,8 +23,23 @@ const EPAY_SUB_CHANNELS = [
   { id: "usdt", label: "USDT" },
 ]
 
+// Define available sub-channels for CodePay
+const CODEPAY_SUB_CHANNELS = [
+  { id: "alipay", label: "支付宝" },
+  { id: "wxpay", label: "微信支付" },
+  { id: "qqpay", label: "QQ钱包" },
+]
+
 // Define available providers metadata
 const PROVIDERS = [
+  {
+    id: "codepay",
+    name: "码支付 (CodePay)",
+    description: "个人免签支付，绑定支付宝/微信收款码即可收款，支持扫码付款",
+    icon: CreditCard,
+    statusKey: "codepay_id",
+    enabledKey: "codepay_enabled"
+  },
   {
     id: "epay",
     name: "易支付 (EPay)",
@@ -321,6 +336,122 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* CodePay Configuration Dialog */}
+      <Dialog open={selectedProvider === "codepay"} onOpenChange={(open) => !open && setSelectedProvider(null)}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>配置码支付 (CodePay)</DialogTitle>
+            <DialogDescription>
+              个人免签支付。请先在 <a href="https://codepay.fateqq.com" target="_blank" className="underline hover:text-primary">codepay.fateqq.com</a> 注册并绑定收款方式，再填入下方参数。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/20">
+                <div className="space-y-0.5">
+                  <Label className="text-base">启用此支付渠道</Label>
+                  <p className="text-xs text-muted-foreground">关闭后前台将不可见</p>
+                </div>
+                <Switch
+                  checked={draftConfig.codepay_enabled === "true"}
+                  onCheckedChange={(checked) => handleChange("codepay_enabled", String(checked))}
+                />
+              </div>
+
+              <div className="grid gap-3 border rounded-lg p-4">
+                <Label>支持的支付方式</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {CODEPAY_SUB_CHANNELS.map((sub) => {
+                    const currentChannels = (draftConfig.codepay_channels || "alipay,wxpay").split(",").filter(Boolean);
+                    const isChecked = currentChannels.includes(sub.id);
+
+                    return (
+                      <div key={sub.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`cp-chan-${sub.id}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            let newChannels;
+                            if (checked) {
+                              newChannels = [...currentChannels, sub.id];
+                            } else {
+                              newChannels = currentChannels.filter(c => c !== sub.id);
+                            }
+                            handleChange("codepay_channels", newChannels.join(","));
+                          }}
+                        />
+                        <Label htmlFor={`cp-chan-${sub.id}`} className="font-normal cursor-pointer">
+                          {sub.label}
+                        </Label>
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">勾选您在码支付平台实际开通的收款方式。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>交易手续费率 (%)</Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    className="pr-8"
+                    value={draftConfig.codepay_fee || ""}
+                    onChange={e => handleChange("codepay_fee", e.target.value)}
+                  />
+                  <span className="absolute right-3 top-2.5 text-sm text-muted-foreground">%</span>
+                </div>
+                <p className="text-xs text-muted-foreground">用户支付时需额外承担的费率，0 为不收取。例如填 3 代表 3%。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>码支付 ID</Label>
+                <Input
+                  placeholder="例如：10041"
+                  value={draftConfig.codepay_id || ""}
+                  onChange={e => handleChange("codepay_id", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">注册码支付后在「用户中心」可以查到的商户 ID（纯数字）。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>通信密钥 (Key)</Label>
+                <Input
+                  type="password"
+                  placeholder="6-100 位字符"
+                  value={draftConfig.codepay_key || ""}
+                  onChange={e => handleChange("codepay_key", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">码支付「用户中心」里的通信密钥，只用于签名，不会明文传输。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>网关地址 (一般不用改)</Label>
+                <Input
+                  placeholder="https://codepay.fateqq.com:51888"
+                  value={draftConfig.codepay_api_url || ""}
+                  onChange={e => handleChange("codepay_api_url", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">默认官方地址 https://codepay.fateqq.com:51888 ，留空即可。</p>
+              </div>
+
+              <div className="rounded-lg border bg-muted/20 p-3 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">使用提示：</p>
+                <p>1. 码支付需要保持其官方监控方式在线（如支付宝官方接口授权或手机端监控），否则无法自动到账通知。</p>
+                <p>2. 支付成功后码支付会自动回调本站发货，无需人工干预。</p>
+              </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedProvider(null)}>取消</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              保存配置
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* EPay Configuration Dialog */}
       <Dialog open={selectedProvider === "epay"} onOpenChange={(open) => !open && setSelectedProvider(null)}>

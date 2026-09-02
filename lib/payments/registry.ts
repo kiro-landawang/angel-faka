@@ -1,5 +1,6 @@
 import { PaymentAdapter } from "./types";
 import { EpayProvider } from "./providers/epay";
+import { CodePayProvider } from "./providers/codepay";
 
 // Map to hold singleton instances or classes
 const adapters: Record<string, PaymentAdapter> = {};
@@ -7,6 +8,9 @@ const adapters: Record<string, PaymentAdapter> = {};
 // Register built-in providers
 const epayProvider = new EpayProvider();
 adapters[epayProvider.name] = epayProvider;
+
+const codepayProvider = new CodePayProvider();
+adapters[codepayProvider.name] = codepayProvider;
 
 export function registerAdapter(adapter: PaymentAdapter) {
   adapters[adapter.name] = adapter;
