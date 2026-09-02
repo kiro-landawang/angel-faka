@@ -120,6 +120,10 @@ async function processNotification(data: any, req?: Request) {
 
     return new NextResponse("success");
   } catch (error) {
+    if ((error as any)?.ignore) {
+      // 非收款类通知（如聊天消息），直接忽略，返回 success 以免转发器重试
+      return new NextResponse("success");
+    }
     logger.error({ err: error instanceof Error ? error.message : "unknown" }, "Mianqian notification processing failed");
     return new NextResponse("fail", { status: 400 });
   }

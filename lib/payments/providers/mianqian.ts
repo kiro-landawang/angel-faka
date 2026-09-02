@@ -167,19 +167,26 @@ export class MianQianProvider implements PaymentAdapter {
       (typeof data.token === "string" ? data.token : "") ||
       "";
 
-    if (fwdType && fwdAmount > 0 && headerToken) {
+    // 通知转发器路径：必须带正确的通信密钥（请求头 X-Mq-Token）
+    if (headerToken) {
       if (headerToken !== this.token) {
         log.error("MianQian forwarder token mismatch");
         throw new Error("通信密钥验证失败");
       }
-      data.amount = String(fwdAmount);
-      data.type = fwdType;
-      return {
-        orderNo: "",
-        status: PaymentStatus.PAID,
-        transactionId: `${fwdType}-${Date.now()}`,
-        raw: data,
-      };
+      if (fwdType && fwdAmount > 0) {
+        data.amount = String(fwdAmount);
+        data.type = fwdType;
+        return {
+          orderNo: "",
+          status: PaymentStatus.PAID,
+          transactionId: `${fwdType}-${Date.now()}`,
+          raw: data,
+        };
+      }
+      // 带密钥但通知里没有金额（如微信聊天、支付宝非收款消息）→ 忽略，避免转发器无限重试
+      const ign = new Error("IGNORE_NON_PAYMENT_NOTIFICATION");
+      (ign as any).ignore = true;
+      throw ign;
     }
 
     // ---------- 2) 旧协议：amount + type + sign=md5(amount+token) ----------
