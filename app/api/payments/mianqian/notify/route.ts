@@ -12,11 +12,17 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   let data: Record<string, any> = {};
+  const contentType = req.headers.get("content-type") || "";
   try {
-    const formData = await req.formData();
-    data = Object.fromEntries(formData.entries());
+    if (contentType.includes("application/json")) {
+      const json = await req.json();
+      data = json && typeof json === "object" ? json : {};
+    } else {
+      const formData = await req.formData();
+      data = Object.fromEntries(formData.entries());
+    }
   } catch {
-    // 空请求体或非表单内容时退化为读取查询参数
+    // 空请求体或非表单/JSON 内容时退化为读取查询参数
     const { searchParams } = new URL(req.url);
     data = Object.fromEntries(searchParams.entries());
   }

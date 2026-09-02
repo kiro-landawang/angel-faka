@@ -23,6 +23,36 @@ const QR_KEY_MAP: Record<string, string> = {
   qqpay: "mianqian_qr_qqpay",
 };
 
+// 通知转发器上报的包名 -> 支付类型
+function mapPackageToType(pkg: string): string {
+  const p = pkg.toLowerCase();
+  if (p.includes("alipay")) return "alipay";
+  if (p.includes("tencent.mm")) return "wxpay";
+  if (p.includes("mobileqq") || p.includes("qq")) return "qqpay";
+  return "";
+}
+
+// 从微信/支付宝到账通知文本里正则提取金额
+function extractAmount(text: string): number {
+  if (!text) return 0;
+  const patterns = [
+    /[¥￥]\s?(\d+(?:\.\d{1,2})?)/,
+    /(\d+(?:\.\d{1,2})?)\s*元/,
+    /收款[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
+    /收到[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
+    /到账[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
+    /金额[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
+  ];
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (m) {
+      const v = parseFloat(m[1]);
+      if (v > 0) return v;
+    }
+  }
+  return 0;
+}
+
 export class MianQianProvider implements PaymentAdapter {
   name = "mianqian";
 
@@ -107,7 +137,10 @@ export class MianQianProvider implements PaymentAdapter {
   }
 
   async verifyCallback(data: any, headers?: any): Promise<PaymentCallbackData> {
-    // data: { amount, type, sign }
+    // 兼容两种回调：
+    //  1) 通知转发器路径：App 直接把微信/支付宝到账通知原文 POST 过来
+    //     （JSON: packageName / title / text / bigText），由服务端提取金额、用请求头密钥鉴权
+    //  2) 旧协议：?amount=10.00&type=alipay&sign=MD5(amount+token)
     await this.loadConfig();
 
     if (!this.isEnabled) {
@@ -115,14 +148,44 @@ export class MianQianProvider implements PaymentAdapter {
       throw new Error("免签支付渠道已停用");
     }
 
-    const { amount, type, sign } = data;
-
-    if (!amount || !sign) {
-      throw new Error("缺少必要参数（amount / sign）");
-    }
-
     if (!this.token) {
       throw new Error("通信密钥未配置");
+    }
+
+    // ---------- 1) 通知转发器路径 ----------
+    const pkg = String(data.packageName || data.package || "");
+    const blob = [data.title, data.text, data.bigText, data.subText, data.message, data.content, data.ticker]
+      .filter((x) => typeof x === "string" && x.length)
+      .join("\n");
+    const fwdType = mapPackageToType(pkg);
+    const fwdAmount = extractAmount(blob);
+
+    const h = headers || {};
+    const headerToken =
+      (typeof h["x-mq-token"] === "string" ? h["x-mq-token"] : "") ||
+      (typeof h["authorization"] === "string" ? h["authorization"].replace(/^Bearer\s+/i, "") : "") ||
+      (typeof data.token === "string" ? data.token : "") ||
+      "";
+
+    if (fwdType && fwdAmount > 0 && headerToken) {
+      if (headerToken !== this.token) {
+        log.error("MianQian forwarder token mismatch");
+        throw new Error("通信密钥验证失败");
+      }
+      data.amount = String(fwdAmount);
+      data.type = fwdType;
+      return {
+        orderNo: "",
+        status: PaymentStatus.PAID,
+        transactionId: `${fwdType}-${Date.now()}`,
+        raw: data,
+      };
+    }
+
+    // ---------- 2) 旧协议：amount + type + sign=md5(amount+token) ----------
+    const { amount, type, sign } = data;
+    if (!amount || !sign) {
+      throw new Error("缺少必要参数（amount / sign），且无法从通知文本识别到账金额");
     }
 
     const expected = crypto.createHash("md5").update(`${amount}${this.token}`).digest("hex");
@@ -131,10 +194,11 @@ export class MianQianProvider implements PaymentAdapter {
       throw new Error("签名验证失败");
     }
 
+    data.type = type || fwdType || "unknown";
     return {
       orderNo: "", // 免签按金额匹配，不直接带订单号
       status: PaymentStatus.PAID,
-      transactionId: `${type || "unknown"}-${Date.now()}`,
+      transactionId: `${data.type}-${Date.now()}`,
       raw: data,
     };
   }
