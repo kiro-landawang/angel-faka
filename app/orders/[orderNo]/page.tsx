@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Copy, Loader2, Check } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { StoreFooter } from "@/components/store-footer"
@@ -146,7 +146,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
   return null;
 }
 
-export default function OrderPage({ params }: { params: { orderNo: string } }) {
+function OrderPageInner({ params }: { params: { orderNo: string } }) {
   const { orderNo } = params
   const searchParams = useSearchParams()
 
@@ -324,5 +324,24 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
       </div>
       <StoreFooter />
     </div>
+  );
+}
+
+// Vercel/Next 15 要求使用 useSearchParams 的客户端页面必须包在 <Suspense> 内，
+// 否则生产构建预渲染时会整体失败并返回 404（仅渲染导航栏、正文空白）。
+export default function OrderPage(props: { params: { orderNo: string } }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background text-foreground">
+          <Navbar />
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </div>
+      }
+    >
+      <OrderPageInner {...props} />
+    </Suspense>
   );
 }
