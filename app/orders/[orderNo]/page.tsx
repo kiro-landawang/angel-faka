@@ -45,7 +45,7 @@ function CopyableField({ label, value }: { label: string, value: string }) {
         <Input
           readOnly
           value={value}
-          className="h-11 rounded-xl border-none bg-[#F6F6F4] font-mono text-sm shadow-none"
+          className="h-11 rounded-xl border-none bg-background font-mono text-sm shadow-none"
         />
         <Button variant="secondary" size="icon" className="h-11 w-11 shrink-0 rounded-xl" onClick={handleCopy}>
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -69,7 +69,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="rounded-2xl bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">卡密 {index + 1}</span>
-          <button type="button" className="rounded-full bg-[#F1EFE8] px-3 py-1 text-xs" onClick={handleCopyFull}>
+          <button type="button" className="rounded-full bg-secondary px-3 py-1 text-xs" onClick={handleCopyFull}>
             {fullCopied ? "已复制" : "复制"}
           </button>
         </div>
@@ -88,7 +88,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="space-y-4 rounded-2xl bg-white p-5">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">账号信息 {index + 1}</span>
-          <button type="button" className="rounded-full bg-[#F1EFE8] px-3 py-1 text-xs" onClick={handleCopyFull}>
+          <button type="button" className="rounded-full bg-secondary px-3 py-1 text-xs" onClick={handleCopyFull}>
             {fullCopied ? "已复制" : "复制全部"}
           </button>
         </div>
@@ -109,7 +109,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="space-y-4 rounded-2xl bg-white p-5">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">虚拟卡 {index + 1}</span>
-          <button type="button" className="rounded-full bg-[#F1EFE8] px-3 py-1 text-xs" onClick={handleCopyFull}>
+          <button type="button" className="rounded-full bg-secondary px-3 py-1 text-xs" onClick={handleCopyFull}>
             {fullCopied ? "已复制" : "复制全部"}
           </button>
         </div>
@@ -130,7 +130,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="space-y-4 rounded-2xl bg-white p-5">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">代理信息 {index + 1}</span>
-          <button type="button" className="rounded-full bg-[#F1EFE8] px-3 py-1 text-xs" onClick={handleCopyFull}>
+          <button type="button" className="rounded-full bg-secondary px-3 py-1 text-xs" onClick={handleCopyFull}>
             {fullCopied ? "已复制" : "复制全部"}
           </button>
         </div>
@@ -288,7 +288,7 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
             {order.paymentMethod === "mianqian" && qrCode ? (
               <div className="space-y-4">
                 <p className="text-sm font-medium">请使用支付宝扫码付款</p>
-                <div className="w-full max-w-md mx-auto rounded-2xl border border-[#ECECEC] bg-white p-4">
+                <div className="w-full max-w-md mx-auto rounded-2xl border border-border bg-white p-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={qrCode} alt="支付宝收款码" className="w-full max-w-[400px] mx-auto object-contain" />
                 </div>

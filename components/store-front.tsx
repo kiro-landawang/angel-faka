@@ -231,7 +231,7 @@ export function StoreFront({
             onClick={() => setActiveCategory(category.id)}
             className={cn(
               "rounded-full px-4 py-2 text-xs",
-              activeCategory === category.id ? "bg-foreground text-background" : "bg-white text-muted-foreground"
+              activeCategory === category.id ? "bg-primary text-primary-foreground" : "bg-white text-muted-foreground"
             )}
           >
             {category.name}
@@ -266,7 +266,7 @@ export function StoreFront({
       </div>
 
       <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto border-none bg-[#F6F6F4] p-0 sm:max-w-md sm:rounded-3xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto border-none bg-background p-0 sm:max-w-md sm:rounded-3xl">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-xl font-medium tracking-tight">{selectedProduct?.name}</DialogTitle>
             <p className="text-xs text-muted-foreground">
@@ -353,12 +353,12 @@ export function StoreFront({
                       <RadioGroupItem value={channel.id} id={channel.id} className="peer sr-only" />
                       <Label
                         htmlFor={channel.id}
-                        className="flex cursor-pointer items-center justify-between rounded-xl bg-white px-4 py-3 peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-foreground"
+                        className="flex cursor-pointer items-center justify-between rounded-xl bg-white px-4 py-3 peer-data-[state=checked]:ring-1 ring-primary"
                       >
                         <span>{channel.name}</span>
                         <span className="flex items-center gap-2">
                           {channel.fee && channel.fee > 0 && <span className="text-xs text-muted-foreground">+{channel.fee}%</span>}
-                          <span className={cn("h-3.5 w-3.5 rounded-full", paymentMethod === channel.id ? "bg-foreground" : "border border-muted-foreground/40")} />
+                          <span className={cn("h-3.5 w-3.5 rounded-full", paymentMethod === channel.id ? "bg-primary" : "border border-muted-foreground/40")} />
                         </span>
                       </Label>
                     </div>
