@@ -122,7 +122,7 @@ const ProductCard = memo(function ProductCard({
         soldOut && "opacity-50"
       )}
     >
-      <div className="relative h-28" style={{ background: v.gradient }}>
+      <div className="relative h-40 sm:h-44" style={{ background: v.gradient }}>
         <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/30 blur-xl" />
         {product.image ? (
           <img src={product.image} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
@@ -340,7 +340,7 @@ export function StoreFront({
             <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-[#ff9ec1]/40 blur-2xl" />
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
               <div
-                className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-4xl shadow-inner"
+                className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-5xl shadow-inner sm:h-32 sm:w-32"
                 style={{ background: featuredVisual.gradient }}
               >
                 {featuredProduct.image ? (
@@ -411,7 +411,7 @@ export function StoreFront({
           <DialogContent className="max-h-[90vh] overflow-y-auto border-none bg-background p-0 sm:max-w-md sm:rounded-3xl">
             {selectedProduct && (
               <div
-                className="relative mx-6 mt-6 h-24 overflow-hidden rounded-2xl"
+                className="relative mx-6 mt-6 h-32 overflow-hidden rounded-2xl sm:h-36"
                 style={{ background: productVisual(selectedProduct.id).gradient }}
               >
                 <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/30 blur-lg" />
