@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo, useCallback, useRef } from "react"
+import dynamic from "next/dynamic"
 import { Plus, Edit2, Trash2, Loader2, Key, ChevronLeft, ChevronRight, Filter, ImageIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -12,7 +13,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { StockManager } from "@/components/admin/stock-manager"
-import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 interface Category {
   id: string
@@ -84,6 +84,131 @@ function compressImage(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
+
+// Lazy-load the heavy WYSIWYG editor (keeps it out of the initial admin chunk,
+// like the storefront did with react-markdown) and memoize it so typing in other
+// form fields (name/price) doesn't re-render the editor on every keystroke.
+const RichTextEditor = dynamic(
+  () => import("@/components/ui/rich-text-editor").then((m) => m.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+        编辑器加载中…
+      </div>
+    ),
+  }
+)
+const MemoRichTextEditor = memo(RichTextEditor)
+
+const ProductRow = memo(function ProductRow({
+  product,
+  image,
+  onToggle,
+  onEdit,
+  onDelete,
+  onStock,
+}: {
+  product: Product
+  image?: string
+  onToggle: (id: string, current: boolean) => void
+  onEdit: (product: Product) => void
+  onDelete: (id: string) => void
+  onStock: (product: Product) => void
+}) {
+  return (
+    <TableRow className="hover:bg-muted/40 transition-colors h-24 group">
+      <TableCell className="py-4 relative">
+        {/* 侧边装饰条 */}
+        <div className="absolute left-0 top-4 bottom-4 w-1 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
+
+        <div className="flex items-center gap-3 pl-2">
+          {image ? (
+            <img
+              src={image}
+              alt={product.name}
+              className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover"
+            />
+          ) : (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <ImageIcon className="h-5 w-5" />
+            </div>
+          )}
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <span className="text-xl font-black text-slate-50 tracking-tight drop-shadow-sm leading-tight">
+              {product.name}
+            </span>
+            <div className="flex items-center gap-2">
+              <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
+                ID: {product.id}
+              </code>
+              <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
+                {product.description || "暂无描述"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge variant="secondary" className="bg-secondary/50 border-border/50 text-xs font-normal">
+          {product.category.name}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <span className="text-lg font-bold text-primary tracking-tight">
+          ¥{Number(product.price).toFixed(2)}
+        </span>
+      </TableCell>
+      <TableCell>
+        <div className={cn(
+          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+          product._count.licenses === 0
+            ? "bg-destructive/10 text-destructive border-destructive/20"
+            : "bg-green-500/10 text-green-500 border-green-500/20"
+        )}>
+          {`库存: ${product._count.licenses}`}
+        </div>
+      </TableCell>
+      <TableCell>
+        <Switch
+          checked={product.isActive}
+          onCheckedChange={() => onToggle(product.id, product.isActive)}
+        />
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
+            onClick={() => onStock(product)}
+          >
+            <Key className="h-3.5 w-3.5 mr-1" />
+            库存
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 px-2 lg:px-3 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+            onClick={() => onEdit(product)}
+          >
+            <Edit2 className="h-3.5 w-3.5 mr-1" />
+            编辑
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 lg:px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => onDelete(product.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1" />
+            删除
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+})
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -202,6 +327,10 @@ export default function ProductsPage() {
     setIsDialogOpen(true)
   }
 
+  const handleOpenDialogRef = useRef(handleOpenDialog)
+  useEffect(() => { handleOpenDialogRef.current = handleOpenDialog }, [handleOpenDialog])
+  const stableOpenDialog = useCallback((product?: Product) => handleOpenDialogRef.current(product), [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError("")
@@ -296,26 +425,26 @@ export default function ProductsPage() {
     }
   }
 
-  const handleToggleActive = async (id: string, current: boolean) => {
+  const handleToggleActive = useCallback(async (id: string, current: boolean) => {
     try {
       await fetch(`/api/admin/products/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ isActive: !current }),
         headers: { "Content-Type": "application/json" }
       })
-      setProducts(products.map(p => p.id === id ? { ...p, isActive: !current } : p))
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: !current } : p))
     } catch (error) {
       console.error(error)
     }
-  }
+  }, [])
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm("确定要删除此商品吗？如果有关联的卡密可能会失败。")) return
     
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" })
       if (res.ok) {
-        setProducts(products.filter(p => p.id !== id))
+        setProducts(prev => prev.filter(p => p.id !== id))
       } else {
         const data = await res.json()
         alert(data.error)
@@ -323,7 +452,7 @@ export default function ProductsPage() {
     } catch (error) {
       console.error(error)
     }
-  }
+  }, [])
 
   const handleImageSelect = async (file: File | undefined) => {
     if (!file) return
@@ -340,6 +469,15 @@ export default function ProductsPage() {
     setImageDataUrl(null)
     setImageError("")
   }
+
+  const handleDescriptionChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, description: value }))
+  }, [])
+
+  const openStock = useCallback((product: Product) => {
+    setStockProduct(product)
+    setIsStockOpen(true)
+  }, [])
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -399,99 +537,15 @@ export default function ProductsPage() {
                 </TableRow>
               ) : (
                 products.map((product) => (
-                  <TableRow key={product.id} className="hover:bg-muted/40 transition-colors h-24 group">
-                    <TableCell className="py-4 relative">
-                      {/* 侧边装饰条 */}
-                      <div className="absolute left-0 top-4 bottom-4 w-1 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                      
-                      <div className="flex items-center gap-3 pl-2">
-                        {images[product.id] ? (
-                          <img
-                            src={images[product.id]}
-                            alt={product.name}
-                            className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                            <ImageIcon className="h-5 w-5" />
-                          </div>
-                        )}
-                        <div className="flex min-w-0 flex-col gap-1.5">
-                          <span className="text-xl font-black text-slate-50 tracking-tight drop-shadow-sm leading-tight">
-                            {product.name}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
-                              ID: {product.id}
-                            </code>
-                            <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
-                              {product.description || "暂无描述"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="bg-secondary/50 border-border/50 text-xs font-normal">
-                        {product.category.name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-lg font-bold text-primary tracking-tight">
-                        ¥{Number(product.price).toFixed(2)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className={cn(
-                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                        product._count.licenses === 0 
-                          ? "bg-destructive/10 text-destructive border-destructive/20" 
-                          : "bg-green-500/10 text-green-500 border-green-500/20"
-                      )}>
-                        {`库存: ${product._count.licenses}`}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Switch 
-                        checked={product.isActive} 
-                        onCheckedChange={() => handleToggleActive(product.id, product.isActive)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                         <Button 
-                           variant="secondary" 
-                           size="sm" 
-                           className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
-                           onClick={() => {
-                             setStockProduct(product)
-                             setIsStockOpen(true)
-                           }}
-                         >
-                           <Key className="h-3.5 w-3.5 mr-1" />
-                           库存
-                         </Button>
-                         <Button 
-                           variant="secondary" 
-                           size="sm" 
-                           className="h-8 px-2 lg:px-3 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
-                           onClick={() => handleOpenDialog(product)}
-                         >
-                           <Edit2 className="h-3.5 w-3.5 mr-1" />
-                           编辑
-                         </Button>
-                         <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           className="h-8 px-2 lg:px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                           onClick={() => handleDelete(product.id)}
-                         >
-                           <Trash2 className="h-3.5 w-3.5 mr-1" />
-                           删除
-                         </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <ProductRow
+                    key={product.id}
+                    product={product}
+                    image={images[product.id]}
+                    onToggle={handleToggleActive}
+                    onEdit={stableOpenDialog}
+                    onDelete={handleDelete}
+                    onStock={openStock}
+                  />
                 ))
               )}
             </TableBody>
@@ -684,9 +738,9 @@ export default function ProductsPage() {
               <div className="md:col-span-2 flex flex-col gap-2 h-full min-h-[400px]">
                 <Label>详细描述</Label>
                 <div className="flex-1 border rounded-md overflow-hidden bg-background">
-                  <RichTextEditor
+                  <MemoRichTextEditor
                     value={formData.description}
-                    onChange={(value) => setFormData({ ...formData, description: value })}
+                    onChange={handleDescriptionChange}
                     placeholder="输入商品的详细说明，支持图片链接、标题排版..."
                   />
                 </div>
