@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit2, Trash2, Loader2, Key, ChevronLeft, ChevronRight, Filter } from "lucide-react"
+import { Plus, Edit2, Trash2, Loader2, Key, ChevronLeft, ChevronRight, Filter, ImageIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
@@ -33,9 +33,56 @@ interface Product {
   resaleMinPrice?: string | null
   sourceProductId?: string | null
   sourcePrice?: string | null
+  image?: string | null
   _count: {
     licenses: number
   }
+}
+
+// Compress the selected image client-side to a small JPEG data URL so it fits
+// comfortably inside the SystemSetting row (server caps base64 at 4.5MB; we target
+// ~400KB to leave headroom). JPEG drops transparency but is fine for product cards.
+const MAX_DIM = 512
+const MAX_BYTES = 400_000
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("请选择图片文件"))
+      return
+    }
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error("读取文件失败"))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error("图片解析失败"))
+      img.onload = () => {
+        const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height))
+        const w = Math.max(1, Math.round(img.width * scale))
+        const h = Math.max(1, Math.round(img.height * scale))
+        const canvas = document.createElement("canvas")
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext("2d")
+        if (!ctx) {
+          reject(new Error("无法创建画布"))
+          return
+        }
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0, 0, w, h)
+        ctx.drawImage(img, 0, 0, w, h)
+        let quality = 0.85
+        let dataUrl = canvas.toDataURL("image/jpeg", quality)
+        while (dataUrl.length > MAX_BYTES && quality > 0.4) {
+          quality -= 0.1
+          dataUrl = canvas.toDataURL("image/jpeg", quality)
+        }
+        resolve(dataUrl)
+      }
+      img.src = reader.result as string
+    }
+    reader.readAsDataURL(file)
+  })
 }
 
 export default function ProductsPage() {
@@ -68,6 +115,11 @@ export default function ProductsPage() {
   })
   const [submitError, setSubmitError] = useState("")
 
+  // Image upload state (display-only; stored as base64 data URL in SystemSetting)
+  const [images, setImages] = useState<Record<string, string>>({})
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
+  const [imageError, setImageError] = useState("")
+
   useEffect(() => {
     fetchData()
   }, [page, selectedCategory])
@@ -90,8 +142,23 @@ export default function ProductsPage() {
       const catData = await catRes.json()
       
       if (prodRes.ok) {
-        setProducts(prodData.products || [])
+        const list = prodData.products || []
+        setProducts(list)
         setTotalPages(prodData.pagination?.pages || 1)
+        // Load thumbnails for the current page of products.
+        const map: Record<string, string> = {}
+        await Promise.all(
+          list.map(async (p: { id: string }) => {
+            try {
+              const r = await fetch(`/api/admin/products/${p.id}/image`)
+              if (r.ok) {
+                const d = await r.json()
+                if (d.image) map[p.id] = d.image
+              }
+            } catch {}
+          })
+        )
+        setImages((prev) => ({ ...prev, ...map }))
       }
       if (catRes.ok) {
         setCategories(catData.items || [])
@@ -105,6 +172,8 @@ export default function ProductsPage() {
 
   const handleOpenDialog = (product?: Product) => {
     setSubmitError("")
+    setImageError("")
+    setImageDataUrl(product ? images[product.id] ?? null : null)
     if (product) {
       setEditingProduct(product)
       setFormData({
@@ -170,6 +239,53 @@ export default function ProductsPage() {
         return
       }
 
+      // For a brand-new product, capture its id so subsequent saves are PATCH.
+      if (!editingProduct && data?.id) {
+        setEditingProduct(data)
+      }
+      const productId = editingProduct ? editingProduct.id : data.id
+
+      // Sync product image (display-only). Failure is non-fatal but surfaced so the
+      // user can retry without losing the saved product.
+      let imageSyncFailed = false
+      if (productId) {
+        try {
+          if (imageDataUrl) {
+            const r = await fetch(`/api/admin/products/${productId}/image`, {
+              method: "POST",
+              body: JSON.stringify({ image: imageDataUrl }),
+              headers: { "Content-Type": "application/json" }
+            })
+            const d = await r.json().catch(() => ({}))
+            if (!r.ok) {
+              imageSyncFailed = true
+              setImageError(d.error || "图片上传失败")
+            } else {
+              setImages((prev) => ({ ...prev, [productId]: imageDataUrl }))
+            }
+          } else if (editingProduct && images[editingProduct.id]) {
+            const r = await fetch(`/api/admin/products/${editingProduct.id}/image`, {
+              method: "DELETE"
+            })
+            if (r.ok) {
+              setImages((prev) => {
+                const next = { ...prev }
+                delete next[editingProduct.id]
+                return next
+              })
+            }
+          }
+        } catch {
+          imageSyncFailed = true
+          setImageError("图片上传网络错误")
+        }
+      }
+
+      if (imageSyncFailed) {
+        setSubmitLoading(false)
+        return
+      }
+
       setIsDialogOpen(false)
       await fetchData()
     } catch (error) {
@@ -207,6 +323,22 @@ export default function ProductsPage() {
     } catch (error) {
       console.error(error)
     }
+  }
+
+  const handleImageSelect = async (file: File | undefined) => {
+    if (!file) return
+    setImageError("")
+    try {
+      const dataUrl = await compressImage(file)
+      setImageDataUrl(dataUrl)
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "图片处理失败")
+    }
+  }
+
+  const removeImage = () => {
+    setImageDataUrl(null)
+    setImageError("")
   }
 
   return (
@@ -272,17 +404,30 @@ export default function ProductsPage() {
                       {/* 侧边装饰条 */}
                       <div className="absolute left-0 top-4 bottom-4 w-1 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
                       
-                      <div className="flex flex-col gap-1.5 pl-2">
-                        <span className="text-xl font-black text-slate-50 tracking-tight drop-shadow-sm leading-tight">
-                          {product.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
-                            ID: {product.id}
-                          </code>
-                          <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
-                            {product.description || "暂无描述"}
+                      <div className="flex items-center gap-3 pl-2">
+                        {images[product.id] ? (
+                          <img
+                            src={images[product.id]}
+                            alt={product.name}
+                            className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                            <ImageIcon className="h-5 w-5" />
+                          </div>
+                        )}
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                          <span className="text-xl font-black text-slate-50 tracking-tight drop-shadow-sm leading-tight">
+                            {product.name}
                           </span>
+                          <div className="flex items-center gap-2">
+                            <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
+                              ID: {product.id}
+                            </code>
+                            <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
+                              {product.description || "暂无描述"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </TableCell>
@@ -431,6 +576,47 @@ export default function ProductsPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Product image */}
+                <div className="grid gap-2">
+                  <Label>商品图片（前台展示）</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
+                      {imageDataUrl ? (
+                        <img src={imageDataUrl} alt="预览" className="h-full w-full object-cover" />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-primary/20 bg-primary/10 px-3 text-xs font-medium text-primary hover:bg-primary/20">
+                        选择图片
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            handleImageSelect(e.target.files?.[0])
+                            e.currentTarget.value = ""
+                          }}
+                        />
+                      </label>
+                      {imageDataUrl && (
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="inline-flex h-8 items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3.5 w-3.5" /> 移除图片
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">建议 1:1 方图，将自动压缩后上传（仅用于商品卡展示）</p>
+                  {imageError && (
+                    <p className="text-[11px] text-destructive">{imageError}</p>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="price">价格 (元)</Label>

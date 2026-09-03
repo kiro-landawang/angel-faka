@@ -13,6 +13,7 @@ export default async function Home() {
   let categoriesData: any[] = [];
   let contactInfo: any = null;
   let announcement: any = null;
+  const imageMap = new Map<string, string>();
 
   try {
     await getDefaultMerchantId();
@@ -48,6 +49,13 @@ export default async function Home() {
     announcement = await prisma.systemSetting.findUnique({
       where: { key: "site_announcement" },
     });
+
+    try {
+      const imageRows = await prisma.systemSetting.findMany({
+        where: { key: { startsWith: "product_image:" } },
+      });
+      for (const row of imageRows) imageMap.set(row.key.replace("product_image:", ""), row.value);
+    } catch {}
   } catch (error) {
     console.warn("Failed to fetch homepage data (likely during build):", error);
   }
@@ -55,13 +63,14 @@ export default async function Home() {
   const categories = categoriesData.map(cat => ({
     id: cat.id,
     name: cat.name,
-    products: cat.products.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price.toString(),
-      stock: p.sourceProduct?._count.licenses ?? p._count.licenses
-    }))
+      products: cat.products.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price.toString(),
+        stock: p.sourceProduct?._count.licenses ?? p._count.licenses,
+        image: imageMap.get(p.id) ?? null,
+      }))
   }));
 
   return (

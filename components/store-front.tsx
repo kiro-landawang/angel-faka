@@ -17,12 +17,12 @@ const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 // ---- visual helpers (deterministic, no external image assets needed) ----
 const PRODUCT_EMOJIS = ["🎮", "🎬", "🎵", "💻", "📺", "🎁", "⚡", "🌟", "💎", "🎯", "🚀", "🔥"]
 const PRODUCT_GRADIENTS = [
-  "linear-gradient(135deg,#ffd1e3,#ff9ec1)",
-  "linear-gradient(135deg,#ffe0ec,#f7a8c4)",
-  "linear-gradient(135deg,#ffd9e8,#e8739a)",
-  "linear-gradient(135deg,#fde2f0,#d98ab0)",
-  "linear-gradient(135deg,#ffd6e7,#ffb3cf)",
-  "linear-gradient(135deg,#f6d8ec,#c98fd0)",
+  "linear-gradient(135deg,#ffc2dc,#ff8fb4)",
+  "linear-gradient(135deg,#ffd0e6,#f59ac0)",
+  "linear-gradient(135deg,#ffc2da,#e8659a)",
+  "linear-gradient(135deg,#fcd2e8,#d273a6)",
+  "linear-gradient(135deg,#ffc4dd,#ff8fb8)",
+  "linear-gradient(135deg,#f3c8e6,#c270cf)",
 ]
 function hashStr(s: string) {
   let h = 0
@@ -58,6 +58,7 @@ interface Product {
   description: string | null
   price: string
   stock: number
+  image?: string | null
 }
 
 interface Category {
@@ -123,9 +124,13 @@ const ProductCard = memo(function ProductCard({
     >
       <div className="relative h-28" style={{ background: v.gradient }}>
         <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/30 blur-xl" />
-        <span className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-sm" aria-hidden>
-          {v.emoji}
-        </span>
+        {product.image ? (
+          <img src={product.image} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-sm" aria-hidden>
+            {v.emoji}
+          </span>
+        )}
         <span
           className={cn(
             "absolute left-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-medium backdrop-blur",
@@ -330,15 +335,19 @@ export function StoreFront({
 
       <div className="relative z-10">
         {featured && featuredProduct && featuredVisual && (
-          <section className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#ffe3ee] to-[#ffc4dd] p-6 shadow-sm sm:p-8">
+          <section className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#ffd0e3] to-[#ff9ec4] p-6 shadow-sm sm:p-8">
             <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/40 blur-2xl" />
             <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-[#ff9ec1]/40 blur-2xl" />
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
               <div
-                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-4xl shadow-inner"
+                className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-4xl shadow-inner"
                 style={{ background: featuredVisual.gradient }}
               >
-                <span aria-hidden>{featuredVisual.emoji}</span>
+                {featuredProduct.image ? (
+                  <img src={featuredProduct.image} alt={featuredProduct.name} className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <span aria-hidden>{featuredVisual.emoji}</span>
+                )}
               </div>
               <div className="flex-1">
                 <p className="text-xs font-medium text-primary">本周主推</p>
@@ -406,12 +415,16 @@ export function StoreFront({
                 style={{ background: productVisual(selectedProduct.id).gradient }}
               >
                 <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/30 blur-lg" />
-                <span
-                  className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-sm"
-                  aria-hidden
-                >
-                  {productVisual(selectedProduct.id).emoji}
-                </span>
+                {selectedProduct.image ? (
+                  <img src={selectedProduct.image} alt={selectedProduct.name} className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <span
+                    className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-sm"
+                    aria-hidden
+                  >
+                    {productVisual(selectedProduct.id).emoji}
+                  </span>
+                )}
               </div>
             )}
             <DialogHeader className="px-6 pt-6">
