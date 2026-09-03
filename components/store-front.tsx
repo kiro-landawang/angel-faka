@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2, Minus, Plus, Check, X } from "lucide-react"
+import { Mascot } from "@/components/mascot"
 import { cn } from "@/lib/utils"
 
 // Lazy-load the heavy markdown renderer so it stays out of the initial bundle
@@ -329,6 +330,7 @@ export function StoreFront({
 
   return (
     <div className="relative w-full">
+      <Mascot />
       {/* decorative blur blobs */}
       <div className="pointer-events-none absolute -left-10 -top-6 -z-0 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-8 top-48 -z-0 h-48 w-48 rounded-full bg-[#ff9ec1]/20 blur-3xl" />
