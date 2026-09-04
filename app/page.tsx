@@ -13,49 +13,36 @@ export default async function Home() {
   let categoriesData: any[] = [];
   let contactInfo: any = null;
   let announcement: any = null;
-  const imageMap = new Map<string, string>();
-
   try {
     await getDefaultMerchantId();
-    categoriesData = await prisma.category.findMany({
-      where: { merchant: { status: "APPROVED" } },
-      orderBy: { priority: "desc" },
-      include: {
-        products: {
-          where: {
-            isActive: true,
-            merchant: { status: "APPROVED" },
-          },
-          include: {
-            sourceProduct: {
-              include: {
-                _count: {
-                  select: { licenses: { where: { status: "AVAILABLE" } } }
-                }
-              }
+    [categoriesData, contactInfo, announcement] = await Promise.all([
+      prisma.category.findMany({
+        where: { merchant: { status: "APPROVED" } },
+        orderBy: { priority: "desc" },
+        include: {
+          products: {
+            where: {
+              isActive: true,
+              merchant: { status: "APPROVED" },
             },
-            _count: {
-              select: { licenses: { where: { status: "AVAILABLE" } } }
+            include: {
+              sourceProduct: {
+                include: {
+                  _count: {
+                    select: { licenses: { where: { status: "AVAILABLE" } } }
+                  }
+                }
+              },
+              _count: {
+                select: { licenses: { where: { status: "AVAILABLE" } } }
+              }
             }
           }
         }
-      }
-    });
-
-    contactInfo = await prisma.systemSetting.findUnique({
-      where: { key: "site_contact_info" },
-    });
-
-    announcement = await prisma.systemSetting.findUnique({
-      where: { key: "site_announcement" },
-    });
-
-    try {
-      const imageRows = await prisma.systemSetting.findMany({
-        where: { key: { startsWith: "product_image:" } },
-      });
-      for (const row of imageRows) imageMap.set(row.key.replace("product_image:", ""), row.value);
-    } catch {}
+      }),
+      prisma.systemSetting.findUnique({ where: { key: "site_contact_info" } }),
+      prisma.systemSetting.findUnique({ where: { key: "site_announcement" } }),
+    ]);
   } catch (error) {
     console.warn("Failed to fetch homepage data (likely during build):", error);
   }
@@ -69,7 +56,7 @@ export default async function Home() {
         description: p.description,
         price: p.price.toString(),
         stock: p.sourceProduct?._count.licenses ?? p._count.licenses,
-        image: imageMap.get(p.id) ?? null,
+        image: `/api/products/${p.id}/image`,
       }))
   }));
 

@@ -33,13 +33,21 @@ async function findAndRepairDefaultMerchant() {
         select: { id: true, status: true },
       });
 
-  await prisma.$transaction([
-    prisma.category.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
-    prisma.product.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
-    prisma.license.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
-    prisma.order.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
-    prisma.coupon.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
-  ]);
+  // A healthy database already has every record assigned. Avoid five writes on
+  // every public request; only run this legacy migration when an orphan exists.
+  const orphanedCategory = await prisma.category.findFirst({
+    where: { merchantId: null },
+    select: { id: true },
+  });
+  if (orphanedCategory) {
+    await prisma.$transaction([
+      prisma.category.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
+      prisma.product.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
+      prisma.license.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
+      prisma.order.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
+      prisma.coupon.updateMany({ where: { merchantId: null }, data: { merchantId: merchant.id } }),
+    ]);
+  }
 
   return merchant.id;
 }

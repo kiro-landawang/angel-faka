@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { getDefaultMerchantId } from "@/lib/platform-merchant";
 
 const log = logger.child({ module: 'AdminProduct' });
+const IMAGE_KEY_PREFIX = "product_image:";
 
 // List Products
 export async function GET(req: Request) {
@@ -36,8 +37,21 @@ export async function GET(req: Request) {
       prisma.product.count({ where })
     ]);
 
+    // Return the current page's thumbnails with the product list. This replaces
+    // the old browser-side N+1 requests (one authenticated API call per image).
+    const imageRows = products.length === 0
+      ? []
+      : await prisma.systemSetting.findMany({
+          where: { key: { in: products.map((product) => `${IMAGE_KEY_PREFIX}${product.id}`) } },
+          select: { key: true, value: true },
+        });
+    const images = Object.fromEntries(
+      imageRows.map((row) => [row.key.slice(IMAGE_KEY_PREFIX.length), row.value])
+    );
+
     return NextResponse.json({
       products,
+      images,
       pagination: {
         total,
         pages: Math.ceil(total / limit),

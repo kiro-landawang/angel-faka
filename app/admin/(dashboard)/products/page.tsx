@@ -273,23 +273,9 @@ export default function ProductsPage() {
         setTotalPages(1)
         setLoadError(prodRes.status === 401 ? "登录已失效，请重新登录" : `商品加载失败（HTTP ${prodRes.status}）`)
       } else {
-        const list = prodData.products || []
-        setProducts(list)
+        setProducts(prodData.products || [])
         setTotalPages(prodData.pagination?.pages || 1)
-        // Load thumbnails for the current page of products.
-        const map: Record<string, string> = {}
-        await Promise.all(
-          list.map(async (p: { id: string }) => {
-            try {
-              const r = await fetch(`/api/admin/products/${p.id}/image`)
-              if (r.ok) {
-                const d = await r.json()
-                if (d.image) map[p.id] = d.image
-              }
-            } catch {}
-          })
-        )
-        setImages((prev) => ({ ...prev, ...map }))
+        setImages((prev) => ({ ...prev, ...(prodData.images || {}) }))
       }
       if (catRes.ok) {
         setCategories(catData.items || [])
