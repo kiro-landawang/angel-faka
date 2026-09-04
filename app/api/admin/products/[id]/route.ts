@@ -50,31 +50,74 @@ export async function DELETE(
     const { id } = params;
 
     const result = await prisma.$transaction(async (tx) => {
-      // 审计：先记录该商品及其卡密数量，便于追溯
+      // 审计：先记录该商品及其关联数量
       const product = await tx.product.findUnique({
         where: { id },
-        select: { name: true, _count: { select: { licenses: true } } },
+        select: {
+          name: true,
+          _count: {
+            select: {
+              licenses: true,
+              orders: true,
+              coupons: true,
+              sourceOrders: true,
+              resellerProducts: true,
+            },
+          },
+        },
       });
       if (!product) throw new Error("Product not found");
 
-      const licenseCount = product._count.licenses;
+      const counts = product._count;
 
-      // 级联删除关联卡密（ licenses 表有 productId 外键，默认 Restrict 导致直接删商品失败）
+      // 安全策略：如果存在已支付订单，禁止删除，避免误删真实交易记录
+      const paidOrders = await tx.order.count({
+        where: { productId: id, status: "PAID" },
+      });
+      if (paidOrders > 0) {
+        throw new Error(`该商品存在 ${paidOrders} 笔已支付订单，请先处理或备份后再删除`);
+      }
+
+      // 1. 级联删除卡密
       await tx.license.deleteMany({ where: { productId: id } });
 
-      // 删除商品
+      // 2. 删除该商品的未支付/失败/过期/取消订单（测试单等）
+      await tx.order.deleteMany({ where: { productId: id } });
+
+      // 3. 解除订单对该商品作为货源的关联
+      await tx.order.updateMany({
+        where: { sourceProductId: id },
+        data: { sourceProductId: null },
+      });
+
+      // 4. 解除优惠券对该商品的关联
+      await tx.coupon.updateMany({
+        where: { productId: id },
+        data: { productId: null },
+      });
+
+      // 5. 解除下级转售商品对该商品的货源指向
+      await tx.product.updateMany({
+        where: { sourceProductId: id },
+        data: { sourceProductId: null },
+      });
+
+      // 6. 删除商品
       await tx.product.delete({ where: { id } });
 
-      return { name: product.name, licenseCount };
+      return { name: product.name, counts };
     });
 
     log.info(
-      { productId: id, name: result.name, deletedLicenses: result.licenseCount },
+      { productId: id, name: result.name, clearedCounts: result.counts },
       "Product deleted"
     );
-    return NextResponse.json({ success: true, deletedLicenses: result.licenseCount });
+    return NextResponse.json({ success: true, clearedCounts: result.counts });
   } catch (error) {
     log.error({ err: error instanceof Error ? error.message : "unknown", productId: params.id }, "Failed to delete product");
-    return NextResponse.json({ error: "Failed to delete product. Make sure to delete licenses first." }, { status: 500 });
+    return NextResponse.json(
+      { error: `删除商品失败: ${error instanceof Error ? error.message : "未知错误"}` },
+      { status: 500 }
+    );
   }
 }
