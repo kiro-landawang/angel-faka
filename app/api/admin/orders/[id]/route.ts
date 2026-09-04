@@ -85,6 +85,34 @@ export async function PATCH(
        return NextResponse.json({ success: true });
     }
 
+    if (action === "CANCEL_AND_RESTORE_STOCK") {
+      if (order.status !== "PAID") {
+        return NextResponse.json({ error: "Only paid orders can be restored" }, { status: 400 });
+      }
+      if (!["manual", "mianqian"].includes(order.paymentMethod || "")) {
+        return NextResponse.json({ error: "Only manual or mianqian orders can be restored" }, { status: 400 });
+      }
+
+      console.warn(`[AUDIT] CANCEL_AND_RESTORE_STOCK by admin from IP ${clientIp} for order ${order.orderNo} (id=${id}, paymentMethod=${order.paymentMethod})`);
+      const restored = await prisma.$transaction(async (tx) => {
+        const licenses = await tx.license.findMany({
+          where: { orderId: order.id, status: "SOLD" },
+          select: { id: true },
+        });
+        await tx.license.updateMany({
+          where: { id: { in: licenses.map((license) => license.id) } },
+          data: { status: "AVAILABLE", orderId: null },
+        });
+        await tx.order.update({
+          where: { id },
+          data: { status: "CANCELLED", paidAt: null },
+        });
+        return licenses.length;
+      });
+
+      return NextResponse.json({ success: true, restored, orderNo: order.orderNo });
+    }
+
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 
   } catch (error: any) {
