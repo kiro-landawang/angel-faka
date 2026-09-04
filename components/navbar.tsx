@@ -37,6 +37,14 @@ export function Navbar() {
             </Link>
           ))}
           <OrderLookup />
+          <a
+            href="https://iacg.love/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 inline-flex items-center rounded-full bg-gradient-to-r from-[#ff5fa2] via-[#ff8a3d] via-[#facc15] via-[#4ade80] via-[#3b82f6] to-[#a855f7] px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm transition-transform duration-200 hover:scale-[1.03] active:scale-95"
+          >
+            神秘福利
+          </a>
         </nav>
       </div>
     </header>
