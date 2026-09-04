@@ -48,6 +48,8 @@ export async function DELETE(
 
   try {
     const { id } = params;
+    const { searchParams } = new URL(req.url);
+    const force = searchParams.get("force") === "true";
 
     const result = await prisma.$transaction(async (tx) => {
       // 审计：先记录该商品及其关联数量
@@ -70,19 +72,21 @@ export async function DELETE(
 
       const counts = product._count;
 
-      // 安全策略：如果存在已支付订单，禁止删除，避免误删真实交易记录
+      // 安全策略：非强制模式下，如果存在已支付订单，先让前端确认
       const paidOrders = await tx.order.count({
         where: { productId: id, status: "PAID" },
       });
-      if (paidOrders > 0) {
+      if (!force && paidOrders > 0) {
         throw new Error(`该商品存在 ${paidOrders} 笔已支付订单，请先处理或备份后再删除`);
       }
 
       // 1. 级联删除卡密
-      await tx.license.deleteMany({ where: { productId: id } });
+      const deletedLicenses = await tx.license.deleteMany({ where: { productId: id } });
 
-      // 2. 删除该商品的未支付/失败/过期/取消订单（测试单等）
-      await tx.order.deleteMany({ where: { productId: id } });
+      // 2. 强制模式下删除该商品的所有订单（含已支付）；非强制模式下仅删除未支付/失败/过期/取消订单
+      const deletedOrders = await tx.order.deleteMany({
+        where: force ? { productId: id } : { productId: id, status: { not: "PAID" } },
+      });
 
       // 3. 解除订单对该商品作为货源的关联
       await tx.order.updateMany({
@@ -105,14 +109,14 @@ export async function DELETE(
       // 6. 删除商品
       await tx.product.delete({ where: { id } });
 
-      return { name: product.name, counts };
+      return { name: product.name, counts, deletedLicenses: deletedLicenses.count, deletedOrders: deletedOrders.count };
     });
 
     log.info(
-      { productId: id, name: result.name, clearedCounts: result.counts },
-      "Product deleted"
+      { productId: id, name: result.name, force, clearedCounts: result.counts, deletedLicenses: result.deletedLicenses, deletedOrders: result.deletedOrders },
+      force ? "Product force-deleted" : "Product deleted"
     );
-    return NextResponse.json({ success: true, clearedCounts: result.counts });
+    return NextResponse.json({ success: true, force, clearedCounts: result.counts, deletedLicenses: result.deletedLicenses, deletedOrders: result.deletedOrders });
   } catch (error) {
     log.error({ err: error instanceof Error ? error.message : "unknown", productId: params.id }, "Failed to delete product");
     return NextResponse.json(

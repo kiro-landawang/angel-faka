@@ -240,6 +240,7 @@ export default function ProductsPage() {
     resaleMinPrice: ""
   })
   const [submitError, setSubmitError] = useState("")
+  const [forceDelete, setForceDelete] = useState<{ open: boolean; id: string; count: number } | null>(null)
 
   // Image upload state (display-only; stored as base64 data URL in SystemSetting)
   const [images, setImages] = useState<Record<string, string>>({})
@@ -434,20 +435,41 @@ export default function ProductsPage() {
   }, [])
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("确定要删除此商品吗？如果有关联的卡密可能会失败。")) return
-    
+    if (!confirm("确定要删除此商品吗？有关联的卡密/订单将会一并清理。")) return
+
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" })
       if (res.ok) {
         setProducts(prev => prev.filter(p => p.id !== id))
       } else {
-        const data = await res.json()
-        alert(data.error)
+        const data = await res.json().catch(() => ({}))
+        const match = typeof data.error === "string" ? data.error.match(/存在 (\d+) 笔已支付订单/) : null
+        if (match) {
+          setForceDelete({ open: true, id, count: parseInt(match[1], 10) })
+        } else {
+          alert(data.error || "删除失败")
+        }
       }
     } catch (error) {
       console.error(error)
     }
   }, [])
+
+  const confirmForceDelete = useCallback(async () => {
+    if (!forceDelete) return
+    try {
+      const res = await fetch(`/api/admin/products/${forceDelete.id}?force=true`, { method: "DELETE" })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setProducts(prev => prev.filter(p => p.id !== forceDelete.id))
+        setForceDelete(null)
+      } else {
+        alert(data.error || "强制删除失败")
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }, [forceDelete])
 
   const handleImageSelect = async (file: File | undefined) => {
     if (!file) return
@@ -758,6 +780,27 @@ export default function ProductsPage() {
             <Button type="submit" form="product-form" disabled={submitLoading}>
               {submitLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {submitLoading ? "保存中..." : "保存商品"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Force Delete Confirmation */}
+      <Dialog open={!!forceDelete?.open} onOpenChange={(open) => { if (!open) setForceDelete(null) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">确认强制删除</DialogTitle>
+            <DialogDescription>
+              该商品存在 <strong>{forceDelete?.count ?? 0}</strong> 笔已支付订单。
+              <br />
+              强制删除会<b>同时删除这些订单及所有关联卡密</b>，不可恢复。是否继续？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setForceDelete(null)}>取消</Button>
+            <Button variant="destructive" onClick={confirmForceDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              确认强制删除
             </Button>
           </DialogFooter>
         </DialogContent>
