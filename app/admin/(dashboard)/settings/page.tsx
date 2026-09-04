@@ -354,7 +354,7 @@ export default function SettingsPage() {
 
       {/* CodePay Configuration Dialog */}
       <Dialog open={selectedProvider === "codepay"} onOpenChange={(open) => !open && setSelectedProvider(null)}>
-        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-2rem)] max-h-[90dvh] overflow-y-auto p-5 sm:max-w-[600px] sm:max-h-[85vh] sm:p-6">
           <DialogHeader>
             <DialogTitle>配置码支付 (CodePay)</DialogTitle>
             <DialogDescription>
@@ -375,7 +375,7 @@ export default function SettingsPage() {
 
               <div className="grid gap-3 border rounded-lg p-4">
                 <Label>支持的支付方式</Label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {CODEPAY_SUB_CHANNELS.map((sub) => {
                     const currentChannels = (draftConfig.codepay_channels || "alipay,wxpay").split(",").filter(Boolean);
                     const isChecked = currentChannels.includes(sub.id);
@@ -470,7 +470,7 @@ export default function SettingsPage() {
 
       {/* EPay Configuration Dialog */}
       <Dialog open={selectedProvider === "epay"} onOpenChange={(open) => !open && setSelectedProvider(null)}>
-        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-2rem)] max-h-[90dvh] overflow-y-auto p-5 sm:max-w-[600px] sm:max-h-[85vh] sm:p-6">
           <DialogHeader>
             <DialogTitle>配置易支付 (EPay)</DialogTitle>
             <DialogDescription>
@@ -492,7 +492,7 @@ export default function SettingsPage() {
               {/* Sub-channel Selection */}
               <div className="grid gap-3 border rounded-lg p-4">
                 <Label>支持的支付方式</Label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {EPAY_SUB_CHANNELS.map((sub) => {
                     const currentChannels = (draftConfig.epay_channels || "").split(",").filter(Boolean);
                     const isChecked = currentChannels.includes(sub.id);
@@ -546,7 +546,7 @@ export default function SettingsPage() {
                   onChange={e => handleChange("epay_api_url", e.target.value)}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label>商户 ID (PID)</Label>
                   <Input 
@@ -617,7 +617,7 @@ export default function SettingsPage() {
 
       {/* 站内免签（个人码）Configuration Dialog */}
       <Dialog open={selectedProvider === "mianqian"} onOpenChange={(open) => !open && setSelectedProvider(null)}>
-        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-2rem)] max-h-[90dvh] overflow-y-auto p-5 sm:max-w-[600px] sm:max-h-[85vh] sm:p-6">
           <DialogHeader>
             <DialogTitle>配置站内免签（个人收款码 / 码支付）</DialogTitle>
             <DialogDescription>
@@ -638,7 +638,7 @@ export default function SettingsPage() {
 
               <div className="grid gap-3 border rounded-lg p-4">
                 <Label>启用的收款方式</Label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {MIANQIAN_SUB_CHANNELS.map((sub) => {
                     const currentChannels = (draftConfig.mianqian_channels || "alipay,wxpay").split(",").filter(Boolean);
                     const isChecked = currentChannels.includes(sub.id);
