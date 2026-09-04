@@ -214,6 +214,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
   const [submitLoading, setSubmitLoading] = useState(false)
   
   // Filter & Pagination State
@@ -251,6 +252,7 @@ export default function ProductsPage() {
 
   const fetchData = async () => {
     setLoading(true)
+    setLoadError("")
     try {
       const queryParams = new URLSearchParams({
         page: page.toString(),
@@ -263,10 +265,14 @@ export default function ProductsPage() {
         fetch("/api/admin/categories")
       ])
       
-      const prodData = await prodRes.json()
-      const catData = await catRes.json()
-      
-      if (prodRes.ok) {
+      const prodData = await prodRes.json().catch(() => ({}))
+      const catData = await catRes.json().catch(() => ({}))
+
+      if (!prodRes.ok) {
+        setProducts([])
+        setTotalPages(1)
+        setLoadError(prodRes.status === 401 ? "登录已失效，请重新登录" : `商品加载失败（HTTP ${prodRes.status}）`)
+      } else {
         const list = prodData.products || []
         setProducts(list)
         setTotalPages(prodData.pagination?.pages || 1)
@@ -290,6 +296,9 @@ export default function ProductsPage() {
       }
     } catch (error) {
       console.error(error)
+      setProducts([])
+      setTotalPages(1)
+      setLoadError("商品加载失败，请检查网络后重试")
     } finally {
       setLoading(false)
     }
@@ -510,6 +519,11 @@ export default function ProductsPage() {
       </div>
 
       <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+        {loadError && (
+          <div role="alert" className="m-4 mb-0 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {loadError}
+          </div>
+        )}
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
