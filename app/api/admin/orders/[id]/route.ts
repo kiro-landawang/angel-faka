@@ -10,6 +10,8 @@ export async function PATCH(
 ) {
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+
   try {
     const { action } = await req.json(); // "MARK_PAID"
     const { id } = params;
@@ -22,6 +24,9 @@ export async function PATCH(
 
     if (action === "MARK_PAID") {
        if (order.status === "PAID") return NextResponse.json({ error: "Already paid" }, { status: 400 });
+
+       // 审计日志：谁、从哪个 IP、哪个订单被手动标记为已支付
+       console.warn(`[AUDIT] Manual MARK_PAID by admin from IP ${clientIp} for order ${order.orderNo} (id=${id})`);
 
        // Transactional manual fulfillment
        await prisma.$transaction(async (tx) => {

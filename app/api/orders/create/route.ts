@@ -5,8 +5,30 @@ import { logger } from "@/lib/logger";
 
 const log = logger.child({ module: 'OrderCreate' });
 
+// 内存限流：每个 IP 5 分钟内最多 10 次下单（Serverless 多实例下非全局，但可挡普通脚本）
+const rateLimitMap = new Map<string, number[]>();
+function isRateLimited(ip: string, limit = 10, windowMs = 5 * 60 * 1000) {
+  const now = Date.now();
+  const timestamps = rateLimitMap.get(ip) || [];
+  const recent = timestamps.filter((t) => now - t < windowMs);
+  recent.push(now);
+  rateLimitMap.set(ip, recent);
+  return recent.length > limit;
+}
+
+function getClientIP(req: Request): string {
+  const xf = req.headers.get("x-forwarded-for");
+  if (xf) return xf.split(",")[0].trim();
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
+  return "unknown";
+}
+
+const SUSPICIOUS_DOMAINS = new Set(["example.com", "test.com"]);
+
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIP(req);
     const body = await req.json();
     const { productId, quantity = 1, email, paymentMethod = "epay", couponCode, options } = body;
 
@@ -16,10 +38,25 @@ export async function POST(req: Request) {
     const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
     const baseUrl = host ? `${proto}://${host}` : "";
 
-    log.info({ productId, quantity, paymentMethod: paymentMethod || "none" }, "Order creation attempt");
+    log.info({ clientIp, productId, quantity, paymentMethod: paymentMethod || "none" }, "Order creation attempt");
+
+    if (isRateLimited(clientIp)) {
+      log.warn({ clientIp }, "Order creation rate limit exceeded");
+      return NextResponse.json({ error: "操作过于频繁，请稍后再试" }, { status: 429 });
+    }
 
     if (!productId || !email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (typeof email !== "string" || !email.includes("@")) {
+      return NextResponse.json({ error: "邮箱格式不正确" }, { status: 400 });
+    }
+
+    const emailDomain = email.split("@")[1].toLowerCase();
+    if (SUSPICIOUS_DOMAINS.has(emailDomain)) {
+      log.warn({ clientIp, email }, "Blocked suspicious email domain");
+      return NextResponse.json({ error: "该邮箱域名无法使用" }, { status: 400 });
     }
 
     // 1. Check Product & Stock

@@ -4,6 +4,25 @@ import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
 
+// 简单内存限流：每个 IP 5 分钟内最多 20 次回调（Serverless 多实例下非全局，但能挡住普通脚本）
+const rateLimitMap = new Map<string, number[]>();
+function isRateLimited(ip: string, limit = 20, windowMs = 5 * 60 * 1000) {
+  const now = Date.now();
+  const timestamps = rateLimitMap.get(ip) || [];
+  const recent = timestamps.filter((t) => now - t < windowMs);
+  recent.push(now);
+  rateLimitMap.set(ip, recent);
+  return recent.length > limit;
+}
+
+function getClientIP(req: Request): string {
+  const xf = req.headers.get("x-forwarded-for");
+  if (xf) return xf.split(",")[0].trim();
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
+  return "unknown";
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const data = Object.fromEntries(searchParams.entries());
@@ -31,7 +50,13 @@ export async function POST(req: Request) {
 
 async function processNotification(data: any, req?: Request) {
   const log = logger.child({ module: 'MianQianNotify' });
-  log.info({ raw: data }, "Received mianqian (personal QR) callback");
+  const clientIp = req ? getClientIP(req) : "unknown";
+  log.info({ clientIp, raw: data }, "Received mianqian (personal QR) callback");
+
+  if (req && isRateLimited(clientIp)) {
+    log.warn({ clientIp }, "Mianqian notify rate limit exceeded");
+    return new NextResponse("rate limit", { status: 429 });
+  }
 
   try {
     const adapter = getPaymentAdapter("mianqian");
@@ -50,6 +75,7 @@ async function processNotification(data: any, req?: Request) {
 
     // 按金额 + 时间窗口匹配最近的待支付订单（免签标准做法）
     const windowStart = new Date(Date.now() - 15 * 60 * 1000);
+    const orderNoHint = data.orderNo ? String(data.orderNo) : undefined;
 
     const candidates = await prisma.order.findMany({
       where: {
@@ -57,6 +83,7 @@ async function processNotification(data: any, req?: Request) {
         createdAt: { gte: windowStart },
         totalAmount: { gte: amount - 0.01, lte: amount + 0.01 },
         paymentMethod: "mianqian",
+        ...(orderNoHint ? { orderNo: orderNoHint } : {}),
       },
       orderBy: { createdAt: "asc" },
       include: {
@@ -65,7 +92,13 @@ async function processNotification(data: any, req?: Request) {
       },
     });
 
-    log.info({ amount, candidateCount: candidates.length, orderNos: candidates.map(o => o.orderNo) }, "Mianqian order matching result");
+    // 防止批量「伪造订单 + 刷金额」攻击：同金额同时存在多笔待支付且未提供 orderNo 时拒绝匹配
+    if (!orderNoHint && candidates.length > 3) {
+      log.warn({ clientIp, amount, candidateCount: candidates.length }, "Ambiguous mianqian amount: too many pending orders, require orderNo");
+      return new NextResponse("ambiguous amount", { status: 400 });
+    }
+
+    log.info({ clientIp, amount, candidateCount: candidates.length, orderNos: candidates.map(o => o.orderNo) }, "Mianqian order matching result");
     if (candidates.length === 0) {
       log.warn({ amount }, "No matching pending mianqian order for amount");
       // 返回 success 以免手机端重复重试造成噪音；订单可能在别处已处理
