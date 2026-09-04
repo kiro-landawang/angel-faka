@@ -65,6 +65,7 @@ async function processNotification(data: any, req?: Request) {
       },
     });
 
+    log.info({ amount, candidateCount: candidates.length, orderNos: candidates.map(o => o.orderNo) }, "Mianqian order matching result");
     if (candidates.length === 0) {
       log.warn({ amount }, "No matching pending mianqian order for amount");
       // 返回 success 以免手机端重复重试造成噪音；订单可能在别处已处理

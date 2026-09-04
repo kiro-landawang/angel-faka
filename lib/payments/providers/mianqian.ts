@@ -38,10 +38,13 @@ function extractAmount(text: string): number {
   const patterns = [
     /[¥￥]\s?(\d+(?:\.\d{1,2})?)/,
     /(\d+(?:\.\d{1,2})?)\s*元/,
-    /收款[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
-    /收到[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
-    /到账[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
-    /金额[^\d]{0,6}?(\d+(?:\.\d{1,2})?)/,
+    /收款[^\d]{0,10}?(\d+(?:\.\d{1,2})?)/,
+    /收到[^\d]{0,10}?(\d+(?:\.\d{1,2})?)/,
+    /到账[^\d]{0,10}?(\d+(?:\.\d{1,2})?)/,
+    /金额[^\d]{0,10}?(\d+(?:\.\d{1,2})?)/,
+    /(\d+(?:\.\d{1,2})?)\s*(?:已|成功)?入账/,
+    /入账[^\d]{0,10}?(\d+(?:\.\d{1,2})?)/,
+    /(?:付款|转账|收款)[^\d]{0,10}?(\d+(?:\.\d{1,2})?)/,
   ];
   for (const re of patterns) {
     const m = text.match(re);
@@ -169,6 +172,7 @@ export class MianQianProvider implements PaymentAdapter {
       .join("\n");
     const fwdType = mapPackageToType(pkg);
     const fwdAmount = extractAmount(blob);
+    log.info({ pkg, fwdType, fwdAmount, title: data.title, text: data.text, bigText: data.bigText, blob }, "MianQian forwarder parsed notification");
 
     const h = headers || {};
     const headerToken =
@@ -178,12 +182,14 @@ export class MianQianProvider implements PaymentAdapter {
       "";
 
     // 通知转发器路径：必须带正确的通信密钥（请求头 X-Mq-Token）
+    log.info({ hasToken: !!headerToken, tokenPrefix: headerToken ? headerToken.slice(0, 16) + "..." : "" }, "MianQian forwarder token check");
     if (headerToken) {
       if (headerToken !== this.token) {
         log.error("MianQian forwarder token mismatch");
         throw new Error("通信密钥验证失败");
       }
       if (fwdType && fwdAmount > 0) {
+        log.info({ fwdType, fwdAmount }, "MianQian forwarder recognized payment");
         data.amount = String(fwdAmount);
         data.type = fwdType;
         return {
@@ -194,6 +200,7 @@ export class MianQianProvider implements PaymentAdapter {
         };
       }
       // 带密钥但通知里没有金额（如微信聊天、支付宝非收款消息）→ 忽略，避免转发器无限重试
+      log.info("MianQian forwarder ignored non-payment notification");
       const ign = new Error("IGNORE_NON_PAYMENT_NOTIFICATION");
       (ign as any).ignore = true;
       throw ign;
