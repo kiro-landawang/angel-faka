@@ -4,6 +4,25 @@ import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
 
+// 简单内存限流：每个 IP 5 分钟内最多 20 次回调
+const rateLimitMap = new Map<string, number[]>();
+function isRateLimited(ip: string, limit = 20, windowMs = 5 * 60 * 1000) {
+  const now = Date.now();
+  const timestamps = rateLimitMap.get(ip) || [];
+  const recent = timestamps.filter((t) => now - t < windowMs);
+  recent.push(now);
+  rateLimitMap.set(ip, recent);
+  return recent.length > limit;
+}
+
+function getClientIP(req: Request): string {
+  const xf = req.headers.get("x-forwarded-for");
+  if (xf) return xf.split(",")[0].trim();
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
+  return "unknown";
+}
+
 export async function GET(req: Request) {
   // EPay notifications are usually GET requests, but verify based on your gateway
   const { searchParams } = new URL(req.url);
@@ -22,7 +41,13 @@ export async function POST(req: Request) {
 
 async function processNotification(data: any, req?: Request) {
   const log = logger.child({ module: 'EPayNotify' });
-  log.info("Received payment callback");
+  const clientIp = req ? getClientIP(req) : "unknown";
+  log.info({ clientIp }, "Received payment callback");
+
+  if (req && isRateLimited(clientIp)) {
+    log.warn({ clientIp }, "EPay notify rate limit exceeded");
+    return new NextResponse("rate limit", { status: 429 });
+  }
 
   try {
     const adapter = getPaymentAdapter("epay");
