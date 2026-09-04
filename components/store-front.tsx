@@ -111,6 +111,7 @@ const ProductCard = memo(function ProductCard({
   product: Product
   onBuy: (p: Product) => void
 }) {
+  const [imageFailed, setImageFailed] = useState(false)
   const v = productVisual(product.id)
   const soldOut = product.stock <= 0
   return (
@@ -125,8 +126,15 @@ const ProductCard = memo(function ProductCard({
     >
       <div className="relative h-40 sm:h-44" style={{ background: v.gradient }}>
         <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/30 blur-xl" />
-        {product.image ? (
-          <img src={product.image} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
+        {product.image && !imageFailed ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            onError={() => setImageFailed(true)}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-sm" aria-hidden>
             {v.emoji}
@@ -188,6 +196,7 @@ export function StoreFront({
     discountValue: number
   } | null>(null)
   const [couponError, setCouponError] = useState("")
+  const [paymentError, setPaymentError] = useState("")
 
   const allProducts = useMemo(() => categories.flatMap((category) => category.products), [categories])
   const featuredProduct = useMemo(
@@ -234,6 +243,7 @@ export function StoreFront({
       setCouponCode("")
       setAppliedCoupon(null)
       setCouponError("")
+      setPaymentError("")
     }
   }, [isBuyOpen])
 
@@ -287,6 +297,7 @@ export function StoreFront({
     }
 
     setEmailError("")
+    setPaymentError("")
     setLoading(true)
 
     try {
@@ -303,15 +314,15 @@ export function StoreFront({
           options: { channel: paymentMethod },
         }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        alert(data.error || "下单失败")
+        setPaymentError(data.error || "下单失败，请稍后重试")
         return
       }
       if (data.payUrl) window.location.href = data.payUrl
     } catch (error) {
       console.error(error)
-      alert("系统错误")
+      setPaymentError("网络错误，请检查连接后重试")
     } finally {
       setLoading(false)
     }
@@ -555,6 +566,7 @@ export function StoreFront({
                 )}
               </div>
 
+              {paymentError && <p role="alert" className="text-sm text-destructive">{paymentError}</p>}
               <div className="flex items-center justify-between pt-2">
                 <span className="text-xs text-muted-foreground">
                   合计{feeAmount > 0 ? ` · 含手续费 ¥${feeAmount.toFixed(2)}` : ""}
