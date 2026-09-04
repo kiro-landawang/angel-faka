@@ -48,13 +48,31 @@ export async function DELETE(
 
   try {
     const { id } = params;
-    
-    await prisma.product.delete({
-      where: { id }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 审计：先记录该商品及其卡密数量，便于追溯
+      const product = await tx.product.findUnique({
+        where: { id },
+        select: { name: true, _count: { select: { licenses: true } } },
+      });
+      if (!product) throw new Error("Product not found");
+
+      const licenseCount = product._count.licenses;
+
+      // 级联删除关联卡密（ licenses 表有 productId 外键，默认 Restrict 导致直接删商品失败）
+      await tx.license.deleteMany({ where: { productId: id } });
+
+      // 删除商品
+      await tx.product.delete({ where: { id } });
+
+      return { name: product.name, licenseCount };
     });
-    
-    log.info({ productId: id }, "Product deleted");
-    return NextResponse.json({ success: true });
+
+    log.info(
+      { productId: id, name: result.name, deletedLicenses: result.licenseCount },
+      "Product deleted"
+    );
+    return NextResponse.json({ success: true, deletedLicenses: result.licenseCount });
   } catch (error) {
     log.error({ err: error instanceof Error ? error.message : "unknown", productId: params.id }, "Failed to delete product");
     return NextResponse.json({ error: "Failed to delete product. Make sure to delete licenses first." }, { status: 500 });
