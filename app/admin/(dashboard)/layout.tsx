@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, ShoppingBag, Package, FileText, Settings, LogOut, BookOpen, Ticket, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdminMobileNav } from "@/components/admin-mobile-nav";
 
 export default async function AdminLayout({
   children,
@@ -82,6 +83,9 @@ export default async function AdminLayout({
           </a>
         </div>
       </aside>
+
+      {/* Mobile navigation (top bar + drawer), desktop keeps the sidebar above */}
+      <AdminMobileNav />
 
       {/* Main Content */}
       <main className="flex-1 p-6 overflow-y-auto">
