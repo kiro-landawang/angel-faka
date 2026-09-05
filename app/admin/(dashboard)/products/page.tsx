@@ -127,6 +127,9 @@ const ProductRow = memo(function ProductRow({
             <img
               src={image}
               alt={product.name}
+              loading="lazy"
+              decoding="async"
+              onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
               className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover"
             />
           ) : (
@@ -294,7 +297,7 @@ export default function ProductsPage() {
   const handleOpenDialog = (product?: Product) => {
     setSubmitError("")
     setImageError("")
-    setImageDataUrl(product ? images[product.id] ?? null : null)
+    setImageDataUrl(product ? (images[product.id] ?? `/api/products/${product.id}/image`) : null)
     if (product) {
       setEditingProduct(product)
       setFormData({
@@ -562,7 +565,7 @@ export default function ProductsPage() {
                   <ProductRow
                     key={product.id}
                     product={product}
-                    image={images[product.id]}
+                    image={images[product.id] || `/api/products/${product.id}/image`}
                     onToggle={handleToggleActive}
                     onEdit={stableOpenDialog}
                     onDelete={handleDelete}
@@ -660,7 +663,7 @@ export default function ProductsPage() {
                   <div className="flex items-center gap-3">
                     <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
                       {imageDataUrl ? (
-                        <img src={imageDataUrl} alt="预览" className="h-full w-full object-cover" />
+                        <img src={imageDataUrl} alt="预览" loading="lazy" decoding="async" onError={() => setImageDataUrl(null)} className="h-full w-full object-cover" />
                       ) : (
                         <ImageIcon className="h-6 w-6 text-muted-foreground" />
                       )}

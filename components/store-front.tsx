@@ -357,7 +357,13 @@ export function StoreFront({
                 style={{ background: featuredVisual.gradient }}
               >
                 {featuredProduct.image ? (
-                  <img src={featuredProduct.image} alt={featuredProduct.name} className="absolute inset-0 h-full w-full object-cover" />
+                  <img
+                    src={featuredProduct.image}
+                    alt={featuredProduct.name}
+                    decoding="async"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
                 ) : (
                   <span aria-hidden>{featuredVisual.emoji}</span>
                 )}
@@ -429,7 +435,14 @@ export function StoreFront({
               >
                 <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/30 blur-lg" />
                 {selectedProduct.image ? (
-                  <img src={selectedProduct.image} alt={selectedProduct.name} className="absolute inset-0 h-full w-full object-cover" />
+                  <img
+                    src={selectedProduct.image}
+                    alt={selectedProduct.name}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
                 ) : (
                   <span
                     className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-sm"

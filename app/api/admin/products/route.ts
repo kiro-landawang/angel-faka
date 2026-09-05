@@ -37,21 +37,13 @@ export async function GET(req: Request) {
       prisma.product.count({ where })
     ]);
 
-    // Return the current page's thumbnails with the product list. This replaces
-    // the old browser-side N+1 requests (one authenticated API call per image).
-    const imageRows = products.length === 0
-      ? []
-      : await prisma.systemSetting.findMany({
-          where: { key: { in: products.map((product) => `${IMAGE_KEY_PREFIX}${product.id}`) } },
-          select: { key: true, value: true },
-        });
-    const images = Object.fromEntries(
-      imageRows.map((row) => [row.key.slice(IMAGE_KEY_PREFIX.length), row.value])
-    );
-
+    // NOTE: product images are intentionally NOT inlined here. Each image is
+    // served via the public cached route /api/products/[id]/image (edge-cached,
+    // binary). Shipping base64 inside this JSON made the list payload huge and
+    // was the main cause of slow admin image loads. The client renders
+    // <img src="/api/products/<id>/image"> instead.
     return NextResponse.json({
       products,
-      images,
       pagination: {
         total,
         pages: Math.ceil(total / limit),

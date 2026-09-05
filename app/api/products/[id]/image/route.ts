@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma";
 
 const KEY_PREFIX = "product_image:";
 
+// Cache each product image at the edge for a long time. Once a given product's
+// image has been requested once, Vercel serves it from the CDN instead of
+// re-running this serverless function (which would cold-start + hit SQLite on
+// every cache miss — the main cause of slow storefront image loads).
+export const revalidate = 86400;
+
 // Product images are public storefront assets. Serve the stored data URL as an
 // image response so the catalog payload stays small and browsers can cache it.
 export async function GET(
@@ -20,7 +26,7 @@ export async function GET(
   return new NextResponse(Buffer.from(match[2], "base64"), {
     headers: {
       "Content-Type": match[1],
-      "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      "Cache-Control": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
     },
   });
 }
