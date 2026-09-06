@@ -35,11 +35,15 @@ export async function POST(req: Request) {
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const { code, discountValue, discountType, productId, categoryId } = await req.json();
+    const { code, discountValue, discountType, productId, categoryId, usageLimit } = await req.json();
 
     if (!code || !discountValue) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
+
+    // usageLimit: 0 = 无限使用, 1 = 一次性（默认）, 其它正整数 = 限定次数
+    const parsedLimit = parseInt(usageLimit, 10);
+    const finalUsageLimit = Number.isNaN(parsedLimit) ? 1 : Math.max(0, parsedLimit);
 
     const product = productId ? await prisma.product.findUnique({ where: { id: productId }, select: { merchantId: true } }) : null;
     const category = categoryId ? await prisma.category.findUnique({ where: { id: categoryId }, select: { merchantId: true } }) : null;
@@ -51,6 +55,7 @@ export async function POST(req: Request) {
         discountType: discountType || "FIXED",
         productId: productId || null,
         categoryId: categoryId || null,
+        usageLimit: finalUsageLimit,
         isUsed: false
       }
     });

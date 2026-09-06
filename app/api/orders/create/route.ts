@@ -97,14 +97,20 @@ export async function POST(req: Request) {
     // 2. Handle Coupon
     let discountAmount = 0;
     let validCouponId = undefined;
+    let coupon: any = null;
 
     if (couponCode) {
-      const coupon = await prisma.coupon.findUnique({
+      coupon = await prisma.coupon.findUnique({
         where: { code: couponCode.trim().toUpperCase() }
       });
 
       if (!coupon || coupon.isUsed || coupon.merchantId !== product.merchantId) {
         return NextResponse.json({ error: "优惠码无效或已被使用" }, { status: 400 });
+      }
+
+      // 使用次数上限检查：0 = 无限使用；已达上限则拒绝
+      if (coupon.usageLimit !== 0 && (coupon.usedCount || 0) >= coupon.usageLimit) {
+        return NextResponse.json({ error: "该优惠码已达到使用上限" }, { status: 400 });
       }
 
       // Check product binding
@@ -132,9 +138,16 @@ export async function POST(req: Request) {
 
     const order = await prisma.$transaction(async (tx) => {
       if (validCouponId) {
+        const newUsedCount = (coupon.usedCount || 0) + 1;
+        // usageLimit 为 0 表示无限使用，永不标记用完；否则达到上限时置为已使用
+        const reachedLimit = coupon.usageLimit !== 0 && newUsedCount >= coupon.usageLimit;
         await tx.coupon.update({
           where: { id: validCouponId },
-          data: { isUsed: true, usedAt: new Date() }
+          data: {
+            usedCount: newUsedCount,
+            isUsed: reachedLimit,
+            usedAt: reachedLimit ? new Date() : undefined
+          }
         });
       }
 

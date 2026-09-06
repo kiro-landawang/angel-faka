@@ -26,6 +26,8 @@ interface Coupon {
   discountType: "FIXED" | "PERCENTAGE"
   discountValue: string
   isUsed: boolean
+  usageLimit: number
+  usedCount: number
   productId: string | null
   product?: { name: string }
   categoryId: string | null
@@ -55,7 +57,8 @@ export default function CouponsPage() {
     discountType: "FIXED" as "FIXED" | "PERCENTAGE",
     scopeType: "ALL" as "ALL" | "PRODUCT" | "CATEGORY",
     productId: "",
-    categoryId: ""
+    categoryId: "",
+    usageMode: "ONCE" as "ONCE" | "UNLIMITED"
   })
   const [saving, setSaving] = useState(false)
 
@@ -77,10 +80,11 @@ export default function CouponsPage() {
         discountType: editingCoupon.discountType,
         scopeType,
         productId: editingCoupon.productId || "",
-        categoryId: editingCoupon.categoryId || ""
+        categoryId: editingCoupon.categoryId || "",
+        usageMode: (editingCoupon.usageLimit ?? 1) === 0 ? "UNLIMITED" : "ONCE"
       })
     } else {
-      setFormData({ code: "", discountValue: "", discountType: "FIXED", scopeType: "ALL", productId: "", categoryId: "" })
+      setFormData({ code: "", discountValue: "", discountType: "FIXED", scopeType: "ALL", productId: "", categoryId: "", usageMode: "ONCE" })
     }
   }, [editingCoupon])
 
@@ -136,6 +140,7 @@ export default function CouponsPage() {
         discountValue: formData.discountValue,
         productId: formData.scopeType === "PRODUCT" ? formData.productId : null,
         categoryId: formData.scopeType === "CATEGORY" ? formData.categoryId : null,
+        usageLimit: formData.usageMode === "UNLIMITED" ? 0 : 1,
       }
 
       const res = await fetch(url, {
@@ -182,7 +187,7 @@ export default function CouponsPage() {
       <div className="flex justify-between items-center shrink-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">优惠码管理</h1>
-          <p className="text-muted-foreground">创建通用、分类或指定商品的一次性折扣券</p>
+          <p className="text-muted-foreground">创建通用、分类或指定商品的折扣券（支持一次性 / 无限使用）</p>
         </div>
         <Button onClick={() => { setEditingCoupon(null); setIsOpen(true); }}>
           <Plus className="mr-2 h-4 w-4" /> 新建优惠码
@@ -241,13 +246,17 @@ export default function CouponsPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {coupon.isUsed ? (
+                      {coupon.usageLimit === 0 ? (
+                        <Badge variant="default" className="bg-blue-600">
+                          无限使用 · 已用 {coupon.usedCount || 0} 次
+                        </Badge>
+                      ) : (coupon.isUsed || (coupon.usedCount || 0) >= coupon.usageLimit) ? (
                         <Badge variant="secondary" className="bg-zinc-800 text-zinc-500 border-zinc-700">
-                          已使用 ({coupon.order?.orderNo})
+                          已使用 ({coupon.usedCount || 0}/{coupon.usageLimit}){coupon.order?.orderNo ? ` · ${coupon.order.orderNo}` : ""}
                         </Badge>
                       ) : (
                         <Badge variant="default" className="bg-green-600">
-                          可使用
+                          可使用 ({coupon.usedCount || 0}/{coupon.usageLimit})
                         </Badge>
                       )}
                     </TableCell>
@@ -301,7 +310,7 @@ export default function CouponsPage() {
           <DialogHeader>
             <DialogTitle>{editingCoupon ? "编辑优惠码" : "新建优惠码"}</DialogTitle>
             <DialogDescription>
-              创建一个一次性的折扣券。
+              创建一个折扣券，可选择一次性或无限使用。
             </DialogDescription>
           </DialogHeader>
           
@@ -360,6 +369,22 @@ export default function CouponsPage() {
                   <SelectItem value="ALL">全站通用</SelectItem>
                   <SelectItem value="PRODUCT">指定商品</SelectItem>
                   <SelectItem value="CATEGORY">指定分类</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>使用方式</Label>
+              <Select 
+                value={formData.usageMode} 
+                onValueChange={(val: any) => setFormData({ ...formData, usageMode: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ONCE">一次性（用一次后失效）</SelectItem>
+                  <SelectItem value="UNLIMITED">无限使用（可重复使用）</SelectItem>
                 </SelectContent>
               </Select>
             </div>

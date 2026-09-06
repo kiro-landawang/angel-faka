@@ -139,6 +139,8 @@ model Coupon {
   category      Category? @relation(fields: [categoryId], references: [id])
   isUsed        Boolean   @default(false)
   order         Order?
+  usageLimit    Int       @default(1)  // 使用次数上限，0 = 无限使用
+  usedCount     Int       @default(0)  // 已使用次数
   createdAt     DateTime  @default(now())
   usedAt        DateTime?
 }

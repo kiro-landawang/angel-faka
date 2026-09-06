@@ -6,19 +6,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const { code, discountValue, discountType, productId, categoryId, isUsed } = await req.json();
+    const { code, discountValue, discountType, productId, categoryId, isUsed, usageLimit } = await req.json();
     const { id } = params;
+
+    const data: any = {
+      code: code?.trim().toUpperCase(),
+      discountValue: discountValue ? parseFloat(discountValue) : undefined,
+      discountType,
+      productId: productId === undefined ? undefined : productId,
+      categoryId: categoryId === undefined ? undefined : categoryId,
+      isUsed
+    };
+    if (usageLimit !== undefined) {
+      const parsed = parseInt(usageLimit, 10);
+      data.usageLimit = Number.isNaN(parsed) ? 1 : Math.max(0, parsed);
+      // 改为「无限使用」时，清除已使用标记（无限券永不应被标记用完）
+      if (data.usageLimit === 0) {
+        data.isUsed = false;
+      }
+    }
 
     const coupon = await prisma.coupon.update({
       where: { id },
-      data: {
-        code: code?.trim().toUpperCase(),
-        discountValue: discountValue ? parseFloat(discountValue) : undefined,
-        discountType,
-        productId: productId === undefined ? undefined : productId,
-        categoryId: categoryId === undefined ? undefined : categoryId,
-        isUsed
-      }
+      data
     });
 
     return NextResponse.json(coupon);

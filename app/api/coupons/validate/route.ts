@@ -24,6 +24,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "该优惠码已被使用" }, { status: 400 });
     }
 
+    // 使用次数上限检查：usageLimit 为 0 表示无限使用，永不拦截；否则已用尽则拦截
+    if (coupon.usageLimit !== 0 && (coupon.usedCount || 0) >= coupon.usageLimit) {
+      return NextResponse.json({ error: "该优惠码已达到使用上限" }, { status: 400 });
+    }
+
     // Check if coupon is bound to a specific product
     if (coupon.productId && coupon.productId !== productId) {
       return NextResponse.json({ error: "该优惠码不适用于此商品" }, { status: 400 });
