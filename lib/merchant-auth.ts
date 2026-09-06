@@ -5,9 +5,21 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 
 const COOKIE_NAME = process.env.MERCHANT_COOKIE_NAME || "geekfaka_merchant_session";
 const SESSION_DURATION = 60 * 60 * 24 * 14;
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || "default-secret-please-change"
-);
+// 解析商户 JWT 签名密钥。
+// 重要：生产环境必须显式配置 JWT_SECRET（或 ADMIN_PASSWORD），禁止回退到
+// 任何可预测的默认值——否则攻击者可利用默认密钥伪造任意商户会话
+// （role=merchant, merchantId=他人ID），登录他人商户后台窃取订单与卡密。
+function getMerchantJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET || process.env.ADMIN_PASSWORD;
+  if (secret) return new TextEncoder().encode(secret);
+  // 仅允许在开发/本地环境回退到一个非生产密钥，避免误部署到生产后被人利用。
+  if (process.env.NODE_ENV !== "production") {
+    return new TextEncoder().encode("dev-only-insecure-merchant-secret-change-me");
+  }
+  throw new Error("FATAL: JWT_SECRET or ADMIN_PASSWORD must be set in production");
+}
+
+const JWT_SECRET = getMerchantJwtSecret();
 
 type MerchantSession = {
   id: string;

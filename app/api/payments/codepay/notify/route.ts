@@ -24,8 +24,21 @@ export async function POST(req: Request) {
   return processNotification(data, req);
 }
 
+function getClientIP(req: Request): string {
+  const xf = req.headers.get("x-forwarded-for");
+  if (xf) return xf.split(",")[0].trim();
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
+  return "unknown";
+}
+
 async function processNotification(data: any, req?: Request) {
   const log = logger.child({ module: 'CodePayNotify' });
+  const clientIp = req ? getClientIP(req) : "unknown";
+  if (req && isRateLimited(clientIp)) {
+    log.warn({ clientIp }, "Codepay notify rate limit exceeded");
+    return new NextResponse("rate limit", { status: 429 });
+  }
   log.info("Received codepay callback");
 
   try {
