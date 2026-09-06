@@ -2,16 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
 import { sendOrderEmail } from "@/lib/mail";
-
-// 同一管理员 IP 15 分钟内最多 30 次手动操作，挡住被盗会话的批量刷单
-const markPaidHits = new Map<string, number[]>();
-function markPaidRateLimited(ip: string) {
-  const now = Date.now();
-  const arr = (markPaidHits.get(ip) || []).filter((t) => now - t < 15 * 60 * 1000);
-  arr.push(now);
-  markPaidHits.set(ip, arr);
-  return arr.length > 30;
-}
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // Manual Actions (e.g., Mark as Paid)
 export async function PATCH(
@@ -25,7 +16,7 @@ export async function PATCH(
   }
 
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
-  if (markPaidRateLimited(clientIp)) {
+  if (!(await checkRateLimit("admin_markpaid:ip:" + clientIp, 30, 15 * 60)).allowed) {
     console.warn(`[AUDIT] MARK_PAID rate-limited for IP ${clientIp}`);
     return new NextResponse("Too many requests", { status: 429 });
   }

@@ -154,3 +154,10 @@ model Article {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// 全局速率限制桶（跨 Serverless 实例共享，避免内存 Map 在 Vercel 多实例下失效）
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+}

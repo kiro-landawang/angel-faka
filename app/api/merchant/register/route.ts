@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import { registerMerchant } from "@/lib/merchant-auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 function validSlug(value: string) {
   return /^[a-z0-9-]{3,32}$/.test(value);
 }
 
-const rateLimitMap = new Map<string, number[]>();
-function isRateLimited(ip: string, limit = 10, windowMs = 15 * 60 * 1000) {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) || [];
-  const recent = timestamps.filter((t) => now - t < windowMs);
-  recent.push(now);
-  rateLimitMap.set(ip, recent);
-  return recent.length > limit;
-}
+// 全局(数据库级)限流：每个 IP 15 分钟内最多 10 次注册
 function getClientIP(req: Request): string {
   const xf = req.headers.get("x-forwarded-for");
   if (xf) return xf.split(",")[0].trim();
@@ -25,7 +18,7 @@ function getClientIP(req: Request): string {
 export async function POST(req: Request) {
   try {
     const clientIp = getClientIP(req);
-    if (isRateLimited(clientIp)) {
+    if (!(await checkRateLimit("merchant_register:ip:" + clientIp, 10, 15 * 60)).allowed) {
       return NextResponse.json({ error: "注册过于频繁，请稍后再试" }, { status: 429 });
     }
     const body = await req.json();

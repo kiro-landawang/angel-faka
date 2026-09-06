@@ -3,17 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
+import { checkRateLimit } from "@/lib/rate-limit";
 
-// 简单内存限流：每个 IP 5 分钟内最多 20 次回调（Serverless 多实例下非全局，但能挡住普通脚本）
-const rateLimitMap = new Map<string, number[]>();
-function isRateLimited(ip: string, limit = 20, windowMs = 5 * 60 * 1000) {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) || [];
-  const recent = timestamps.filter((t) => now - t < windowMs);
-  recent.push(now);
-  rateLimitMap.set(ip, recent);
-  return recent.length > limit;
-}
+// 全局(数据库级)限流：每个 IP 5 分钟内最多 60 次回调（宽松，避免误伤转发器重试）
 
 function getClientIP(req: Request): string {
   const xf = req.headers.get("x-forwarded-for");
@@ -53,7 +45,7 @@ async function processNotification(data: any, req?: Request) {
   const clientIp = req ? getClientIP(req) : "unknown";
   log.info({ clientIp, raw: data }, "Received mianqian (personal QR) callback");
 
-  if (req && isRateLimited(clientIp)) {
+  if (req && !(await checkRateLimit("mianqian_notify:ip:" + clientIp, 60, 5 * 60)).allowed) {
     log.warn({ clientIp }, "Mianqian notify rate limit exceeded");
     return new NextResponse("rate limit", { status: 429 });
   }

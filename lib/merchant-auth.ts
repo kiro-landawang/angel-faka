@@ -32,7 +32,7 @@ type MerchantSession = {
 function cookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.ENABLE_SECURE_COOKIE === "true",
+    secure: process.env.NODE_ENV === "production" || process.env.ENABLE_SECURE_COOKIE === "true",
     maxAge: SESSION_DURATION,
     sameSite: "lax" as const,
     path: "/",
@@ -43,10 +43,6 @@ export async function merchantLogin(username: string, password: string) {
   const merchant = await prisma.merchant.findUnique({ where: { username } });
   if (!merchant || !(await verifyPassword(password, merchant.password))) {
     return { ok: false as const, reason: "INVALID_CREDENTIALS" as const };
-  }
-  if (merchant.status === "PENDING") {
-    await prisma.merchant.update({ where: { id: merchant.id }, data: { status: "APPROVED" } });
-    merchant.status = "APPROVED";
   }
   if (merchant.status !== "APPROVED") {
     return { ok: false as const, reason: merchant.status as "PENDING" | "REJECTED" | "SUSPENDED" };
@@ -71,10 +67,6 @@ export async function getCurrentMerchant(): Promise<MerchantSession | null> {
 
     const merchant = await prisma.merchant.findUnique({ where: { id: payload.merchantId } });
     if (!merchant) return null;
-    if (merchant.status === "PENDING") {
-      await prisma.merchant.update({ where: { id: merchant.id }, data: { status: "APPROVED" } });
-      merchant.status = "APPROVED";
-    }
     if (merchant.status !== "APPROVED") return null;
     return toSession(merchant);
   } catch {

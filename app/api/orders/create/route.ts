@@ -1,20 +1,13 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const log = logger.child({ module: 'OrderCreate' });
 
-// 内存限流：每个 IP 5 分钟内最多 10 次下单（Serverless 多实例下非全局，但可挡普通脚本）
-const rateLimitMap = new Map<string, number[]>();
-function isRateLimited(ip: string, limit = 10, windowMs = 5 * 60 * 1000) {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) || [];
-  const recent = timestamps.filter((t) => now - t < windowMs);
-  recent.push(now);
-  rateLimitMap.set(ip, recent);
-  return recent.length > limit;
-}
+// 全局(数据库级)限流：每个 IP 5 分钟内最多 10 次下单
 
 function getClientIP(req: Request): string {
   const xf = req.headers.get("x-forwarded-for");
@@ -40,7 +33,7 @@ export async function POST(req: Request) {
 
     log.info({ clientIp, productId, quantity, paymentMethod: paymentMethod || "none" }, "Order creation attempt");
 
-    if (isRateLimited(clientIp)) {
+    if (!(await checkRateLimit("order_create:ip:" + clientIp, 10, 5 * 60)).allowed) {
       log.warn({ clientIp }, "Order creation rate limit exceeded");
       return NextResponse.json({ error: "操作过于频繁，请稍后再试" }, { status: 429 });
     }
@@ -134,7 +127,7 @@ export async function POST(req: Request) {
 
     // 4. Create Order
     // Generate a simple order number
-    const orderNo = `HT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const orderNo = "HT-" + randomBytes(12).toString("hex");
 
     const order = await prisma.$transaction(async (tx) => {
       if (validCouponId) {
@@ -195,7 +188,7 @@ export async function POST(req: Request) {
 
     } catch (payError: any) {
       log.error({ err: payError instanceof Error ? payError.message : "unknown", orderNo }, "Payment initiation failed");
-      return NextResponse.json({ error: "Payment initialization failed: " + payError.message }, { status: 500 });
+      return NextResponse.json({ error: "支付初始化失败，请稍后重试或联系客服" }, { status: 500 });
     }
 
   } catch (error) {

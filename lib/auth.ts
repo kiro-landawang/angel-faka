@@ -24,7 +24,7 @@ function getJwtSecret(): Uint8Array {
 const JWT_SECRET = getJwtSecret();
 
 function getCookieOptions() {
-  const isSecure = process.env.ENABLE_SECURE_COOKIE === "true";
+  const isSecure = process.env.NODE_ENV === "production" || process.env.ENABLE_SECURE_COOKIE === "true";
   return { 
     httpOnly: true, 
     secure: isSecure, 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -35,7 +36,7 @@ function getClientIP(req: Request): string {
 async function processNotification(data: any, req?: Request) {
   const log = logger.child({ module: 'CodePayNotify' });
   const clientIp = req ? getClientIP(req) : "unknown";
-  if (req && isRateLimited(clientIp)) {
+  if (req && !(await checkRateLimit("codepay_notify:ip:" + clientIp, 60, 5 * 60)).allowed) {
     log.warn({ clientIp }, "Codepay notify rate limit exceeded");
     return new NextResponse("rate limit", { status: 429 });
   }
