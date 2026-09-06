@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/navbar";
 import { StoreFront } from "@/components/store-front";
+import { RainbowBanner } from "@/components/rainbow-banner";
 import { prisma } from "@/lib/prisma";
 import { Announcement } from "@/components/announcement";
 import { StoreFooter } from "@/components/store-footer";
@@ -64,6 +65,7 @@ export default async function Home() {
     <main className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
       <div className="mx-auto w-full max-w-3xl px-5 pt-4">
+        <RainbowBanner />
         <Announcement content={announcement?.value || undefined} />
         <StoreFront categories={categories} featured />
       </div>
