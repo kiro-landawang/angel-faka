@@ -8,10 +8,20 @@ const COOKIE_NAME = process.env.COOKIE_NAME || "geekfaka_admin_session";
 const SESSION_DURATION = 60 * 60 * 24 * 14; // 14 Days
 const log = logger.child({ module: 'Auth' });
 
-// Get secret from env or fallback
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || "default-secret-please-change"
-);
+// Resolve the JWT signing secret.
+// 重要：生产环境必须显式配置 JWT_SECRET（或 ADMIN_PASSWORD），禁止回退到
+// 任何可预测的默认值——否则攻击者可利用默认密钥伪造管理员会话。
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET || process.env.ADMIN_PASSWORD;
+  if (secret) return new TextEncoder().encode(secret);
+  // 仅允许在开发/本地环境回退到一个非生产密钥，避免误部署到生产后被人利用。
+  if (process.env.NODE_ENV !== "production") {
+    return new TextEncoder().encode("dev-only-insecure-secret-change-me");
+  }
+  throw new Error("FATAL: JWT_SECRET or ADMIN_PASSWORD must be set in production");
+}
+
+const JWT_SECRET = getJwtSecret();
 
 function getCookieOptions() {
   const isSecure = process.env.ENABLE_SECURE_COOKIE === "true";
