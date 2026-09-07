@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Loader2, CheckCircle2, XCircle, Clock, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Loader2, CheckCircle2, XCircle, Clock, ExternalLink, ChevronLeft, ChevronRight, MessageSquare, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface Order {
   id: string
@@ -37,6 +38,8 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [productFilter, setProductFilter] = useState("ALL")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [proofDialog, setProofDialog] = useState<{ open: boolean; orderNo: string; proof: string | null; submittedAt: string | null }>({ open: false, orderNo: "", proof: null, submittedAt: null })
+  const [proofLoading, setProofLoading] = useState<string | null>(null)
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
@@ -138,6 +141,29 @@ export default function OrdersPage() {
       alert("操作失败")
     } finally {
       setActionLoading(null)
+    }
+  }
+
+  const handleViewProof = async (orderId: string, orderNo: string) => {
+    setProofLoading(orderId)
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/proof`)
+      const data = await res.json()
+      if (res.ok) {
+        setProofDialog({
+          open: true,
+          orderNo,
+          proof: data.proof?.proof || null,
+          submittedAt: data.proof?.submittedAt || null,
+        })
+      } else {
+        alert(data.error || "暂无凭证")
+      }
+    } catch (error) {
+      console.error(error)
+      alert("获取凭证失败")
+    } finally {
+      setProofLoading(null)
     }
   }
 
@@ -284,6 +310,19 @@ export default function OrdersPage() {
                              {actionLoading === order.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "补单"}
                            </Button>
                          )}
+
+                         {order.status === "PENDING" && (
+                           <Button 
+                             variant="ghost" 
+                             size="icon" 
+                             className="h-8 w-8 text-amber-400 hover:text-amber-300 hover:bg-amber-400/10"
+                             onClick={() => handleViewProof(order.id, order.orderNo)}
+                             disabled={proofLoading === order.id}
+                             title="查看付款凭证"
+                           >
+                             {proofLoading === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+                           </Button>
+                         )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -318,6 +357,33 @@ export default function OrdersPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={proofDialog.open} onOpenChange={(open) => setProofDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>付款凭证</DialogTitle>
+            <DialogDescription>
+              订单 {proofDialog.orderNo}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {proofDialog.proof ? (
+              <div className="space-y-3">
+                <div className="rounded-xl bg-muted p-3 text-sm break-all">
+                  {proofDialog.proof}
+                </div>
+                {proofDialog.submittedAt && (
+                  <p className="text-xs text-muted-foreground">
+                    提交时间：{new Date(proofDialog.submittedAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">该订单暂未提交付款凭证。</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

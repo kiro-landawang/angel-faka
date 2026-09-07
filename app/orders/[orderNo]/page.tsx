@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { Copy, Loader2, Check } from "lucide-react"
+import { Copy, Loader2, Check, Send, MessageSquare } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { StoreFooter } from "@/components/store-footer"
 import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import React from "react"
 
 interface Order {
@@ -155,6 +156,9 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
   const [syncing, setSyncing] = useState(false)
   const [checking, setChecking] = useState(false)
   const [qrCode, setQrCode] = useState<string>("")
+  const [proof, setProof] = useState("")
+  const [proofStatus, setProofStatus] = useState<"idle" | "submitting" | "submitted">("idle")
+  const [proofMessage, setProofMessage] = useState("")
 
   const fetchOrder = async () => {
     try {
@@ -169,6 +173,14 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
             .then((r) => r.json())
             .then((j) => setQrCode(j.qrCode || ""))
             .catch(() => {})
+        }
+        // 赞赏码支付：拉取赞赏码收款码，并查看是否已提交付款凭证
+        if (data.paymentMethod === "appreciation") {
+          fetch("/api/payments/appreciation/qr")
+            .then((r) => r.json())
+            .then((j) => setQrCode(j.qrCode || ""))
+            .catch(() => {})
+          fetchProofStatus()
         }
       }
     } catch (error) {
@@ -215,6 +227,49 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
       console.error(e)
     } finally {
       setChecking(false)
+    }
+  }
+
+  const fetchProofStatus = async () => {
+    try {
+      const res = await fetch(`/api/orders/${orderNo}/proof`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.proof?.proof) {
+          setProofStatus("submitted")
+          setProof(data.proof.proof)
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleSubmitProof = async () => {
+    const text = proof.trim()
+    if (!text || text.length < 2) {
+      setProofMessage("请输入付款凭证（例如微信昵称或转账单号）")
+      return
+    }
+    setProofStatus("submitting")
+    try {
+      const res = await fetch(`/api/orders/${orderNo}/proof`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proof: text })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setProofStatus("submitted")
+        setProofMessage("")
+      } else {
+        setProofMessage(data.error || "提交失败")
+        setProofStatus("idle")
+      }
+    } catch (e) {
+      console.error(e)
+      setProofMessage("网络错误")
+      setProofStatus("idle")
     }
   }
 
@@ -298,21 +353,70 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
                 </p>
                 <p className="text-xs text-muted-foreground">付款完成后可点击下方按钮刷新状态。</p>
               </div>
+            ) : order.paymentMethod === "appreciation" && qrCode ? (
+              <div className="space-y-4">
+                <p className="text-sm font-medium">请使用微信扫一扫赞赏码付款</p>
+                <div className="w-full max-w-sm mx-auto rounded-2xl border border-border bg-white p-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrCode} alt="微信赞赏码" className="w-full max-w-[300px] mx-auto object-contain" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  应付金额 <span className="font-medium text-foreground">¥{Number(order.totalAmount).toFixed(2)}</span>
+                </p>
+                <p className="text-xs text-destructive">
+                  赞赏码需手动核对，付款后请填写你的微信昵称或转账单号，管理员确认后自动发货。
+                </p>
+
+                {proofStatus === "submitted" ? (
+                  <div className="rounded-xl bg-emerald-50 p-3 text-emerald-700 text-sm">
+                    <div className="flex items-center justify-center gap-2">
+                      <Check className="h-4 w-4" />
+                      已提交凭证：{proof}
+                    </div>
+                    <p className="mt-1 text-xs text-emerald-600">管理员核对通过后将自动发货，请勿重复提交。</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-left">
+                    <Label htmlFor="proof" className="text-xs text-muted-foreground">
+                      付款凭证（微信昵称 / 转账单号 / 备注）
+                    </Label>
+                    <Input
+                      id="proof"
+                      value={proof}
+                      onChange={(e) => setProof(e.target.value)}
+                      placeholder="例如：微信昵称 ANGEL"
+                      className="h-11 rounded-xl border-none bg-secondary/50 shadow-none"
+                    />
+                    {proofMessage && <p className="text-xs text-destructive">{proofMessage}</p>}
+                    <Button
+                      className="h-11 w-full rounded-full"
+                      onClick={handleSubmitProof}
+                      disabled={proofStatus === "submitting" || !proof.trim()}
+                    >
+                      {proofStatus === "submitting" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      <Send className="mr-2 h-4 w-4" />
+                      提交凭证
+                    </Button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="space-y-2">
                 <p className="text-sm font-medium">付款完成后请不要关闭此页面</p>
                 <p className="text-xs text-muted-foreground">系统确认支付后会自动展示卡密。</p>
               </div>
             )}
-            <Button
-              className="mt-5 h-11 w-full rounded-full"
-              variant="secondary"
-              onClick={handleCheckPayment}
-              disabled={checking}
-            >
-              {checking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              我已支付，刷新状态
-            </Button>
+            {order.paymentMethod !== "appreciation" && (
+              <Button
+                className="mt-5 h-11 w-full rounded-full"
+                variant="secondary"
+                onClick={handleCheckPayment}
+                disabled={checking}
+              >
+                {checking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                我已支付，刷新状态
+              </Button>
+            )}
           </div>
         )}
 

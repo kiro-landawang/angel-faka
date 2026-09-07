@@ -40,6 +40,14 @@ const MIANQIAN_SUB_CHANNELS = [
 // Define available providers metadata
 const PROVIDERS = [
   {
+    id: "appreciation",
+    name: "微信赞赏码",
+    description: "个人微信赞赏码收款：顾客扫码付款后由管理员在后台手动确认并发货",
+    icon: CreditCard,
+    statusKey: "appreciation_qr_url",
+    enabledKey: "appreciation_enabled"
+  },
+  {
     id: "mianqian",
     name: "站内免签（个人码 / 码支付）",
     description: "零成本、不经第三方：上传你的微信/支付宝个人收款码，顾客扫码付款后由手机监听自动发货",
@@ -715,6 +723,56 @@ export default function SettingsPage() {
                   <code className="text-foreground">https://kiro.pdan.top/api/payments/mianqian/notify</code></p>
                 <p>3. 提交参数：<code className="text-foreground">amount=实际到账金额</code> 、 <code className="text-foreground">type=alipay或wxpay</code> 、 <code className="text-foreground">sign=MD5(amount+通信密钥)</code></p>
                 <p>4. 付款后系统按金额自动匹配订单并发货。</p>
+              </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedProvider(null)}>取消</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              保存配置
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 微信赞赏码 Configuration Dialog */}
+      <Dialog open={selectedProvider === "appreciation"} onOpenChange={(open) => !open && setSelectedProvider(null)}>
+        <DialogContent className="w-[calc(100%-2rem)] max-h-[90dvh] overflow-y-auto p-5 sm:max-w-[600px] sm:max-h-[85vh] sm:p-6">
+          <DialogHeader>
+            <DialogTitle>配置微信赞赏码</DialogTitle>
+            <DialogDescription>
+              上传你的微信赞赏码截图。顾客下单后会看到此二维码，扫码付款后由管理员手动确认并发货。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/20">
+                <div className="space-y-0.5">
+                  <Label className="text-base">启用此支付方式</Label>
+                  <p className="text-xs text-muted-foreground">关闭后前台将不可见</p>
+                </div>
+                <Switch
+                  checked={draftConfig.appreciation_enabled === "true"}
+                  onCheckedChange={(checked) => handleChange("appreciation_enabled", String(checked))}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>赞赏码图片地址</Label>
+                <Input
+                  placeholder="https://你的图床/appreciation.png"
+                  value={draftConfig.appreciation_qr_url || ""}
+                  onChange={e => handleChange("appreciation_qr_url", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  你的微信赞赏码截图直链。也可上传到本项目 public/qr-codes/appreciation.png，然后填 <code className="text-foreground">/qr-codes/appreciation.png</code>。
+                </p>
+              </div>
+
+              <div className="rounded-lg border bg-muted/20 p-3 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">使用提示：</p>
+                <p>1. 赞赏码收款直接进入你的微信零钱，无第三方手续费。</p>
+                <p>2. 顾客付款后需提交微信昵称或转账单号作为凭证。</p>
+                <p>3. 管理员在「订单管理」核对凭证后点击「补单」即可自动发货。</p>
               </div>
           </div>
           <DialogFooter>

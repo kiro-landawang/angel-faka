@@ -10,7 +10,8 @@ export async function GET() {
       key: { in: [
         "epay_enabled", "epay_channels", "epay_fee",
         "codepay_enabled", "codepay_channels", "codepay_fee",
-        "mianqian_enabled", "mianqian_channels", "mianqian_fee"
+        "mianqian_enabled", "mianqian_channels", "mianqian_fee",
+        "appreciation_enabled", "appreciation_qr_url"
       ] }
     }
   });
@@ -71,6 +72,11 @@ export async function GET() {
     if (enabledSubChannels.includes("qqpay")) {
       channels.push({ id: "qqpay", name: "QQ钱包（个人码）", icon: "wallet", provider: "mianqian", fee });
     }
+  }
+
+  // 微信赞赏码（纯手动确认）
+  if (config.appreciation_enabled === "true") {
+    channels.push({ id: "appreciation", name: "微信赞赏码", icon: "heart", provider: "appreciation", fee: 0 });
   }
 
   return NextResponse.json(channels);
