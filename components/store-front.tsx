@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2, Minus, Plus, Check, X } from "lucide-react"
 import { Mascot } from "@/components/mascot"
-import { ArcWheelNav } from "@/components/arc-wheel-nav"
+import { SidebarNav } from "@/components/sidebar-nav"
 import { cn } from "@/lib/utils"
 
 // Lazy-load the heavy markdown renderer so it stays out of the initial bundle
@@ -77,34 +77,6 @@ interface PaymentChannel {
   fee?: number
 }
 
-// Memoized so clicking a tab / typing in the dialog doesn't re-render every row.
-const CategoryTab = memo(function CategoryTab({
-  category,
-  active,
-  onSelect,
-}: {
-  category: Category
-  active: boolean
-  onSelect: (id: string) => void
-}) {
-  const emoji = categoryEmoji(category.name)
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(category.id)}
-      className={cn(
-        "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs transition-all duration-200",
-        active
-          ? "bg-primary text-primary-foreground shadow-[0_4px_12px_rgba(214,106,139,0.4)]"
-          : "bg-white text-muted-foreground hover:bg-secondary"
-      )}
-    >
-      <span aria-hidden>{emoji}</span>
-      <span>{category.name}</span>
-    </button>
-  )
-})
-
 const ProductCard = memo(function ProductCard({
   product,
   onBuy,
@@ -121,7 +93,7 @@ const ProductCard = memo(function ProductCard({
       disabled={soldOut}
       onClick={() => onBuy(product)}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-3xl bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+        "group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] text-left backdrop-blur-md shadow-[0_6px_20px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-[#E2725B]/50 hover:shadow-[0_14px_40px_rgba(226,114,91,0.28)]",
         soldOut && "opacity-50"
       )}
     >
@@ -144,25 +116,25 @@ const ProductCard = memo(function ProductCard({
         <span
           className={cn(
             "absolute left-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-medium backdrop-blur",
-            soldOut ? "bg-black/40 text-white" : "bg-white/80 text-foreground"
+            soldOut ? "bg-black/40 text-white" : "bg-white/15 text-white"
           )}
         >
           {soldOut ? "缺货" : "现货"}
         </span>
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <p className="truncate text-[15px] font-medium">{product.name}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="truncate text-[15px] font-medium text-white">{product.name}</p>
+        <p className="mt-1 text-xs text-white/50">
           {soldOut ? "暂时缺货" : `库存 ${product.stock} · 自动发货`}
         </p>
         <div className="mt-auto flex items-center justify-between pt-3">
-          <span className="text-base font-medium text-primary">¥{Number(product.price).toFixed(2)}</span>
+          <span className="text-base font-medium text-[#E2725B]">¥{Number(product.price).toFixed(2)}</span>
           <span
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-200",
               soldOut
-                ? "bg-muted text-muted-foreground"
-                : "bg-primary text-primary-foreground group-hover:shadow-[0_6px_16px_rgba(214,106,139,0.45)]"
+                ? "bg-white/10 text-white/50"
+                : "bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-white group-hover:shadow-[0_6px_16px_rgba(226,114,91,0.45)]"
             )}
           >
             {soldOut ? "售罄" : "购买"}
@@ -331,8 +303,8 @@ export function StoreFront({
 
   if (categories.length === 0) {
     return (
-      <div className="py-24 text-center text-muted-foreground">
-        <p className="text-2xl font-medium tracking-tight text-foreground">暂无商品上架</p>
+      <div className="py-24 text-center text-white/60">
+        <p className="text-2xl font-medium tracking-tight text-white">暂无商品上架</p>
         <p className="mt-2 text-sm">商品准备好后会显示在这里</p>
       </div>
     )
@@ -344,14 +316,14 @@ export function StoreFront({
     <div className="relative w-full">
       <Mascot />
       {/* decorative blur blobs */}
-      <div className="pointer-events-none absolute -left-10 -top-6 -z-0 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-8 top-48 -z-0 h-48 w-48 rounded-full bg-[#ff9ec1]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -left-10 -top-6 -z-0 h-40 w-40 rounded-full bg-[#E2725B]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-8 top-48 -z-0 h-48 w-48 rounded-full bg-[#7858c8]/20 blur-3xl" />
 
       <div className="relative z-10">
         {featured && featuredProduct && featuredVisual && (
-          <section className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#ffd0e3] to-[#ff9ec4] p-6 shadow-sm sm:p-8">
-            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/40 blur-2xl" />
-            <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-[#ff9ec1]/40 blur-2xl" />
+          <section className="relative mb-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#E2725B]/15 to-[#7858c8]/10 p-6 shadow-[0_10px_40px_rgba(120,40,160,0.18)] sm:p-8">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-[#E2725B]/15 blur-2xl" />
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
               <div
                 className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-5xl shadow-inner sm:h-32 sm:w-32"
@@ -370,16 +342,16 @@ export function StoreFront({
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-xs font-medium text-primary">本周主推</p>
-                <h1 className="mt-1 text-2xl font-medium tracking-tight sm:text-3xl">{featuredProduct.name}</h1>
-                <p className="mt-1.5 text-sm text-muted-foreground">
+                <p className="text-xs font-medium text-[#E2725B]">本周主推</p>
+                <h1 className="mt-1 text-2xl font-medium tracking-tight text-white sm:text-3xl">{featuredProduct.name}</h1>
+                <p className="mt-1.5 text-sm text-white/60">
                   {featuredProduct.stock > 0 ? `现货 ${featuredProduct.stock} 份 · 邮箱自动收货` : "暂时缺货"}
                 </p>
               </div>
               <div className="flex items-center gap-4 sm:flex-col sm:items-end">
-                <span className="text-2xl font-medium text-primary">¥{Number(featuredProduct.price).toFixed(2)}</span>
+                <span className="text-2xl font-medium text-[#E2725B]">¥{Number(featuredProduct.price).toFixed(2)}</span>
                 <Button
-                  className="h-11 rounded-full px-6 shadow-[0_8px_20px_rgba(214,106,139,0.45)] transition-transform duration-200 hover:scale-[1.03] active:scale-95"
+                  className="h-11 rounded-full bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-6 text-white shadow-[0_8px_20px_rgba(226,114,91,0.45)] transition-transform duration-200 hover:scale-[1.03] active:scale-95"
                   disabled={featuredProduct.stock <= 0}
                   onClick={() => handleBuyClick(featuredProduct)}
                 >
@@ -391,7 +363,7 @@ export function StoreFront({
         )}
 
         {featured && (
-          <div className="mb-8 grid grid-cols-3 gap-3">
+          <div className="mb-6 grid grid-cols-3 gap-3">
             {[
               ["⚡", "秒级自动发货"],
               ["🔒", "信息加密保护"],
@@ -399,28 +371,26 @@ export function StoreFront({
             ].map(([icon, label]) => (
               <div
                 key={label}
-                className="flex items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-sm"
+                className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
               >
                 <span className="text-xl" aria-hidden>
                   {icon}
                 </span>
-                <span className="text-xs font-medium text-foreground">{label}</span>
+                <span className="text-xs font-medium text-white/80">{label}</span>
               </div>
             ))}
           </div>
         )}
 
         <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-          {/* 弧形滚轮式侧边导航：桌面端圆弧，移动端横向滚轮 */}
-          <div className="md:w-44 md:shrink-0">
-            <ArcWheelNav
-              categories={categories.map((c) => ({ id: c.id, name: c.name, emoji: categoryEmoji(c.name) }))}
-              activeId={activeCategory}
-              onSelect={setActiveCategory}
-            />
-          </div>
+          {/* 固定位置分类侧边栏：可折叠，鼠标靠近放大，当前项赤陶色高亮 */}
+          <SidebarNav
+            categories={categories.map((c) => ({ id: c.id, name: c.name, emoji: categoryEmoji(c.name) }))}
+            activeId={activeCategory}
+            onSelect={setActiveCategory}
+          />
           {/* 内容区：当前分类下的商品 */}
-          <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {shelfProducts.map((product) => (
               <ProductCard key={product.id} product={product} onBuy={handleBuyClick} />
             ))}
@@ -428,7 +398,7 @@ export function StoreFront({
         </div>
 
         <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
-          <DialogContent className="max-h-[90vh] overflow-y-auto border-none bg-background p-0 sm:max-w-md sm:rounded-3xl">
+          <DialogContent className="max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0e0d15] p-0 sm:max-w-md sm:rounded-3xl">
             {selectedProduct && (
               <div
                 className="relative mx-6 mt-6 h-32 overflow-hidden rounded-2xl sm:h-36"
@@ -455,12 +425,12 @@ export function StoreFront({
               </div>
             )}
             <DialogHeader className="px-6 pt-6">
-              <DialogTitle className="text-xl font-medium tracking-tight">{selectedProduct?.name}</DialogTitle>
-              <p className="text-xs text-muted-foreground">库存 {selectedProduct?.stock} · 支付后邮箱收货</p>
+              <DialogTitle className="text-xl font-medium tracking-tight text-white">{selectedProduct?.name}</DialogTitle>
+              <p className="text-xs text-white/50">库存 {selectedProduct?.stock} · 支付后邮箱收货</p>
             </DialogHeader>
 
             {selectedProduct?.description && (
-              <div className="prose prose-sm max-w-none px-6 text-muted-foreground">
+              <div className="prose prose-sm max-w-none px-6 text-white/70">
                 <ReactMarkdown>{selectedProduct.description}</ReactMarkdown>
               </div>
             )}
@@ -469,7 +439,7 @@ export function StoreFront({
               <div className="space-y-2">
                 <Label
                   htmlFor="email"
-                  className={cn("text-xs text-muted-foreground", emailError && "text-destructive")}
+                  className={cn("text-xs text-white/50", emailError && "text-destructive")}
                 >
                   接收邮箱 {emailError && <span className="ml-2 font-normal">{emailError}</span>}
                 </Label>
@@ -479,33 +449,33 @@ export function StoreFront({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="h-11 rounded-xl border-none bg-white shadow-none"
+                  className="h-11 rounded-xl border border-white/15 bg-white/5 text-white shadow-none placeholder:text-white/30"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">数量</Label>
+                <Label className="text-xs text-white/50">数量</Label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5"
                     onClick={() => setQuantity((value) => Math.max(1, value - 1))}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3.5 w-3.5 text-white" />
                   </button>
-                  <span className="w-6 text-center text-[15px] font-medium">{quantity}</span>
+                  <span className="w-6 text-center text-[15px] font-medium text-white">{quantity}</span>
                   <button
                     type="button"
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5"
                     onClick={() => setQuantity((value) => Math.min(selectedProduct?.stock || 1, value + 1))}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3.5 w-3.5 text-white" />
                   </button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="coupon" className="text-xs text-muted-foreground">
+                <Label htmlFor="coupon" className="text-xs text-white/50">
                   优惠码
                 </Label>
                 <div className="flex gap-2">
@@ -516,14 +486,14 @@ export function StoreFront({
                       onChange={(e) => setCouponCode(e.target.value)}
                       placeholder="可选"
                       disabled={!!appliedCoupon}
-                      className="h-11 rounded-xl border-none bg-white uppercase shadow-none"
+                      className="h-11 rounded-xl border border-white/15 bg-white/5 uppercase text-white shadow-none placeholder:text-white/30"
                     />
-                    {appliedCoupon && <Check className="absolute right-3 top-3.5 h-4 w-4 text-emerald-600" />}
+                    {appliedCoupon && <Check className="absolute right-3 top-3.5 h-4 w-4 text-emerald-400" />}
                   </div>
                   {appliedCoupon ? (
                     <Button
                       variant="secondary"
-                      className="h-11 rounded-xl"
+                      className="h-11 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
                       onClick={() => {
                         setAppliedCoupon(null)
                         setCouponCode("")
@@ -534,7 +504,7 @@ export function StoreFront({
                   ) : (
                     <Button
                       variant="secondary"
-                      className="h-11 rounded-xl"
+                      className="h-11 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
                       onClick={handleApplyCoupon}
                       disabled={isValidatingCoupon || !couponCode.trim()}
                     >
@@ -543,11 +513,11 @@ export function StoreFront({
                   )}
                 </div>
                 {couponError && <p className="text-xs text-destructive">{couponError}</p>}
-                {appliedCoupon && <p className="text-xs text-emerald-700">已减免 ¥{discount.toFixed(2)}</p>}
+                {appliedCoupon && <p className="text-xs text-emerald-400">已减免 ¥{discount.toFixed(2)}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">支付方式</Label>
+                <Label className="text-xs text-white/50">支付方式</Label>
                 {channels.length > 0 ? (
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid gap-2">
                     {channels.map((channel) => (
@@ -555,17 +525,17 @@ export function StoreFront({
                         <RadioGroupItem value={channel.id} id={channel.id} className="peer sr-only" />
                         <Label
                           htmlFor={channel.id}
-                          className="flex cursor-pointer items-center justify-between rounded-xl bg-white px-4 py-3 peer-data-[state=checked]:ring-1 ring-primary"
+                          className="flex cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-[#E2725B]"
                         >
                           <span>{channel.name}</span>
                           <span className="flex items-center gap-2">
                             {channel.fee && channel.fee > 0 && (
-                              <span className="text-xs text-muted-foreground">+{channel.fee}%</span>
+                              <span className="text-xs text-white/40">+{channel.fee}%</span>
                             )}
                             <span
                               className={cn(
                                 "h-3.5 w-3.5 rounded-full",
-                                paymentMethod === channel.id ? "bg-primary" : "border border-muted-foreground/40"
+                                paymentMethod === channel.id ? "bg-[#E2725B]" : "border border-white/40"
                               )}
                             />
                           </span>
@@ -574,7 +544,7 @@ export function StoreFront({
                     ))}
                   </RadioGroup>
                 ) : (
-                  <div className="rounded-xl bg-white px-4 py-3 text-center text-xs text-destructive">
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-xs text-destructive">
                     暂无可用支付方式
                   </div>
                 )}
@@ -582,14 +552,14 @@ export function StoreFront({
 
               {paymentError && <p role="alert" className="text-sm text-destructive">{paymentError}</p>}
               <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-white/50">
                   合计{feeAmount > 0 ? ` · 含手续费 ¥${feeAmount.toFixed(2)}` : ""}
                 </span>
-                <span className="text-xl font-medium">¥{finalTotal.toFixed(2)}</span>
+                <span className="text-xl font-medium text-white">¥{finalTotal.toFixed(2)}</span>
               </div>
               <Button
                 size="lg"
-                className="h-12 w-full rounded-full text-base shadow-[0_8px_20px_rgba(214,106,139,0.45)] transition-transform duration-200 hover:scale-[1.02] active:scale-95"
+                className="h-12 w-full rounded-full bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-base text-white shadow-[0_8px_20px_rgba(226,114,91,0.45)] transition-transform duration-200 hover:scale-[1.02] active:scale-95"
                 onClick={handlePurchase}
                 disabled={loading}
               >

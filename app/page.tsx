@@ -62,9 +62,15 @@ export default async function Home() {
   }));
 
   return (
-    <main className="flex min-h-screen flex-col bg-background text-foreground">
+    <main
+      className="dark flex min-h-screen flex-col text-foreground"
+      style={{
+        background:
+          "radial-gradient(140% 120% at 0% 0%, #1a1430 0%, rgba(26,20,48,0) 45%), radial-gradient(120% 120% at 100% 100%, #15233a 0%, rgba(21,35,58,0) 50%), #0a0a0f",
+      }}
+    >
       <Navbar />
-      <div className="mx-auto w-full max-w-3xl px-5 pt-4">
+      <div className="mx-auto w-full max-w-6xl px-5 pt-6">
         <RainbowBanner />
         <Announcement content={announcement?.value || undefined} />
         <StoreFront categories={categories} featured />
