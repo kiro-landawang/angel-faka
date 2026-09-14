@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2, Minus, Plus, Check, X } from "lucide-react"
 import { Mascot } from "@/components/mascot"
+import { ArcWheelNav } from "@/components/arc-wheel-nav"
 import { cn } from "@/lib/utils"
 
 // Lazy-load the heavy markdown renderer so it stays out of the initial bundle
@@ -409,21 +410,21 @@ export function StoreFront({
           </div>
         )}
 
-        <div className="mb-5 flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <CategoryTab
-              key={category.id}
-              category={category}
-              active={activeCategory === category.id}
+        <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+          {/* 弧形滚轮式侧边导航：分类沿弧线排布，到达基准线才高亮 */}
+          <div className="md:w-40 md:shrink-0">
+            <ArcWheelNav
+              categories={categories.map((c) => ({ id: c.id, name: c.name, emoji: categoryEmoji(c.name) }))}
+              activeId={activeCategory}
               onSelect={setActiveCategory}
             />
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {shelfProducts.map((product) => (
-            <ProductCard key={product.id} product={product} onBuy={handleBuyClick} />
-          ))}
+          </div>
+          {/* 内容区：当前分类下的商品 */}
+          <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
+            {shelfProducts.map((product) => (
+              <ProductCard key={product.id} product={product} onBuy={handleBuyClick} />
+            ))}
+          </div>
         </div>
 
         <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
