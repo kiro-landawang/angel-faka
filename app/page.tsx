@@ -70,7 +70,7 @@ export default async function Home() {
       }}
     >
       <Navbar />
-      <div className="mx-auto w-full max-w-6xl px-5 pt-6">
+      <div className="mx-auto w-full max-w-7xl px-5 pt-6">
         <RainbowBanner />
         <Announcement content={announcement?.value || undefined} />
         <StoreFront categories={categories} featured />

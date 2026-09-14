@@ -114,7 +114,7 @@ const ProductCard = memo(function ProductCard({
         )}
         <span
           className={cn(
-            "absolute left-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-medium backdrop-blur",
+            "absolute left-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-medium",
             soldOut ? "bg-black/40 text-white" : "bg-white/15 text-white"
           )}
         >

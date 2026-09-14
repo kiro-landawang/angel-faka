@@ -70,7 +70,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
   return (
     <aside
       className={cn(
-        "shrink-0 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 backdrop-blur-md transition-[width] duration-300",
+        "shrink-0 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 transition-[width] duration-300",
         collapsed ? "w-20" : "w-72"
       )}
     >
