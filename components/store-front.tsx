@@ -94,7 +94,7 @@ const ProductCard = memo(function ProductCard({
       onClick={() => onBuy(product)}
       className={cn(
         // 白底液态玻璃：半透明 + 背景折射 + 圆角小块
-        "group relative flex flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/70 text-left shadow-[0_8px_30px_rgba(22,22,40,0.07)] backdrop-blur-md",
+        "group relative flex flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/75 text-left shadow-[0_8px_30px_rgba(22,22,40,0.07)]",
         // 微交互：鼠标一放轻轻浮起、边框染赤陶、投影变暖
         "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
         "hover:-translate-y-2 hover:border-[#E2725B]/45 hover:shadow-[0_22px_60px_rgba(226,114,91,0.22)]",
@@ -318,7 +318,7 @@ export function StoreFront({
             ].map(([icon, label]) => (
               <div
                 key={label}
-                className="flex items-center gap-2 rounded-2xl border border-white/70 bg-white/70 px-4 py-3.5 shadow-[0_8px_30px_rgba(22,22,40,0.06)] backdrop-blur-md"
+                className="flex items-center gap-2 rounded-2xl border border-white/70 bg-white/80 px-4 py-3.5 shadow-[0_8px_30px_rgba(22,22,40,0.06)]"
               >
                 <span className="text-xl" aria-hidden>
                   {icon}
