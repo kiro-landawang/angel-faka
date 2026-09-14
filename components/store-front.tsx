@@ -411,8 +411,8 @@ export function StoreFront({
         )}
 
         <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-          {/* 弧形滚轮式侧边导航：分类沿弧线排布，到达基准线才高亮 */}
-          <div className="md:w-40 md:shrink-0">
+          {/* 弧形滚轮式侧边导航：桌面端圆弧，移动端横向滚轮 */}
+          <div className="md:w-44 md:shrink-0">
             <ArcWheelNav
               categories={categories.map((c) => ({ id: c.id, name: c.name, emoji: categoryEmoji(c.name) }))}
               activeId={activeCategory}
