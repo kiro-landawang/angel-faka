@@ -62,15 +62,17 @@ export default async function Home() {
   }));
 
   return (
-    <main
-      className="dark flex min-h-screen flex-col text-foreground"
-      style={{
-        background:
-          "radial-gradient(140% 120% at 0% 0%, #1a1430 0%, rgba(26,20,48,0) 45%), radial-gradient(120% 120% at 100% 100%, #15233a 0%, rgba(21,35,58,0) 50%), #0a0a0f",
-      }}
-    >
+    <main className="relative flex min-h-screen flex-col text-zinc-900">
+      {/* 背景：近白底 + 极淡彩色光斑，供液态玻璃折射出苹果那种会流动的高级感 */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(60% 50% at 12% 8%, rgba(226,114,91,0.12), transparent 60%), radial-gradient(55% 45% at 88% 18%, rgba(140,120,230,0.12), transparent 60%), radial-gradient(60% 50% at 75% 92%, rgba(90,160,230,0.10), transparent 60%), #fbfbfd",
+        }}
+      />
       <Navbar />
-      <div className="mx-auto w-full max-w-7xl px-5 pt-6">
+      <div className="mx-auto w-full max-w-7xl px-5 pt-8 sm:px-8 lg:px-10">
         <RainbowBanner />
         <Announcement content={announcement?.value || undefined} />
         <StoreFront categories={categories} featured />

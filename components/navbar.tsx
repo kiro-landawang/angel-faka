@@ -13,8 +13,8 @@ export function Navbar() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background">
-      <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
+    <header className="sticky top-0 z-50 w-full border-b border-zinc-200/70 bg-background/70 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
         <Link href="/" className="flex items-center gap-2 text-[15px] font-medium tracking-tight">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#ff7eb3] to-[#ec4a8c] text-sm shadow-sm">
             🌸

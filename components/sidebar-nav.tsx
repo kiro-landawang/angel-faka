@@ -16,11 +16,10 @@ interface SidebarNavProps {
 }
 
 /**
- * 极简沉浸式侧边分类导航
- * - 固定位置竖直分类列表（非滚轮）
- * - 可折叠：展开显文字、收起仅留图标
- * - 当前选中项用赤陶色高亮
- * - 鼠标靠近分类时按距离平滑放大（二次项衰减），rAF 节流，离开还原
+ * 白底液态玻璃分类导航
+ * - 桌面端：固定竖直分类列表，可折叠（展开显文字 / 收起仅图标），当前项赤陶色高亮
+ * - 桌面端：鼠标靠近分类时按距离平滑放大（二次项衰减），rAF 节流，离开还原
+ * - 移动端（<md）：整条变为全宽横向滚动分类条，折叠按钮隐藏
  */
 export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) {
   const [collapsed, setCollapsed] = useState(false)
@@ -28,20 +27,22 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
   const latestY = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
 
-  const RANGE = 120 // 影响半径(px)
-  const BOOST = 0.18 // 最大放大比例
+  const RANGE = 130 // 影响半径(px)
+  const BOOST = 0.16 // 最大放大比例
 
   const applyFrame = () => {
     rafRef.current = null
     const my = latestY.current
     if (my == null) return
+    // 仅桌面端做邻近放大（移动端为横向滚动，按 Y 计算无意义）
+    if (typeof window !== "undefined" && !window.matchMedia("(min-width: 768px)").matches) return
     itemRefs.current.forEach((el) => {
       if (!el) return
       const r = el.getBoundingClientRect()
       const cy = r.top + r.height / 2
       const f = Math.max(0, 1 - Math.abs(my - cy) / RANGE)
       const s = 1 + BOOST * f * f
-      const dx = 10 * f * f
+      const dx = 12 * f * f
       el.style.transform = `translateX(${dx}px) scale(${s})`
       el.style.zIndex = f > 0.05 ? String(Math.round(f * 50)) : ""
     })
@@ -70,14 +71,17 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
   return (
     <aside
       className={cn(
-        "shrink-0 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 transition-[width] duration-300",
-        collapsed ? "w-20" : "w-72"
+        // 白底液态玻璃：半透明 + 背景折射 + 浅色描边
+        "w-full rounded-3xl border border-white/70 bg-white/55 p-4 shadow-[0_8px_30px_rgba(22,22,40,0.07)] backdrop-blur-lg",
+        "transition-[width] duration-300 md:shrink-0",
+        collapsed ? "md:w-24" : "md:w-72",
+        "max-md:rounded-2xl"
       )}
     >
       <div className="mb-3 flex items-center gap-2 px-1">
         <span
           className={cn(
-            "text-[13px] font-extrabold tracking-[0.15em] text-white/55 transition-opacity",
+            "text-[13px] font-extrabold tracking-[0.15em] text-zinc-400 transition-opacity",
             collapsed && "pointer-events-none opacity-0"
           )}
         >
@@ -87,16 +91,20 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           aria-label="折叠 / 展开"
-          className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[14px] text-white/80 transition hover:bg-[#E2725B]/20"
+          className="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white/70 text-[14px] text-zinc-500 transition hover:bg-[#E2725B]/15 hover:text-[#E2725B] md:flex"
         >
           {collapsed ? "»" : "«"}
         </button>
       </div>
 
+      {/* 移动端：横向滚动分类条；桌面端：竖直列表 */}
       <div
         onMouseMove={onMouseMove}
         onMouseLeave={reset}
-        className={cn("flex flex-col gap-2.5", collapsed && "items-center")}
+        className={cn(
+          "flex gap-2.5 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0",
+          collapsed && "md:items-center"
+        )}
       >
         {categories.map((cat, i) => {
           const active = cat.id === activeId
@@ -110,12 +118,12 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
               onClick={() => onSelect(cat.id)}
               style={{ transformOrigin: "left center" }}
               className={cn(
-                "flex items-center gap-3 rounded-xl border px-4 py-3 text-[14.5px] font-bold text-white/55 will-change-transform",
-                "transition-[color,background-color,border-color,box-shadow] duration-200",
-                collapsed ? "h-[52px] w-[52px] justify-center gap-0 px-0" : "",
+                "flex shrink-0 items-center gap-2.5 rounded-xl border px-4 py-3 text-[14.5px] font-bold text-zinc-500 will-change-transform",
+                "transition-[color,background-color,border-color,box-shadow,transform] duration-200",
+                collapsed ? "md:h-[52px] md:w-[52px] md:justify-center md:gap-0 md:px-0" : "",
                 active
                   ? "border-transparent bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-white shadow-[0_8px_26px_rgba(226,114,91,0.45)]"
-                  : "border-white/10 bg-white/5 hover:text-white"
+                  : "border-zinc-200 bg-white/60 hover:border-[#E2725B]/40 hover:text-zinc-900"
               )}
             >
               {cat.emoji && (
@@ -131,7 +139,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
 
       <p
         className={cn(
-          "mt-3 text-center text-[11.5px] text-white/35 transition-opacity",
+          "mt-3 text-center text-[11.5px] text-zinc-400 transition-opacity max-md:hidden",
           collapsed && "pointer-events-none opacity-0"
         )}
       >
