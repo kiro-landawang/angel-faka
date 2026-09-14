@@ -72,7 +72,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
     <aside
       className={cn(
         // 白底液态玻璃：半透明 + 背景折射 + 浅色描边
-        "w-full rounded-3xl border border-white/70 bg-white/55 p-4 shadow-[0_8px_30px_rgba(22,22,40,0.07)] backdrop-blur-lg",
+        "w-full rounded-3xl border border-white/70 bg-white/70 p-4 shadow-[0_8px_30px_rgba(22,22,40,0.07)] backdrop-blur-md",
         "transition-[width] duration-300 md:shrink-0",
         collapsed ? "md:w-24" : "md:w-72",
         "max-md:rounded-2xl"
