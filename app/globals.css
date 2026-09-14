@@ -86,5 +86,6 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  animation: rainbow-pan 5s linear infinite;
+  /* 动画已关闭：避免持续重绘造成页面卡顿，保留静态彩虹渐变 */
+  animation: none;
 }

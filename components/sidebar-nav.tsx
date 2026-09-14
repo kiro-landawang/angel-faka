@@ -20,17 +20,21 @@ interface SidebarNavProps {
  * - 固定位置竖直分类列表（非滚轮）
  * - 可折叠：展开显文字、收起仅留图标
  * - 当前选中项用赤陶色高亮
- * - 鼠标靠近分类时按距离平滑放大（二次项衰减），离开还原
+ * - 鼠标靠近分类时按距离平滑放大（二次项衰减），rAF 节流，离开还原
  */
 export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) {
   const [collapsed, setCollapsed] = useState(false)
-  const listRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const latestY = useRef<number | null>(null)
+  const rafRef = useRef<number | null>(null)
 
   const RANGE = 120 // 影响半径(px)
   const BOOST = 0.18 // 最大放大比例
 
-  const applyProximity = (my: number) => {
+  const applyFrame = () => {
+    rafRef.current = null
+    const my = latestY.current
+    if (my == null) return
     itemRefs.current.forEach((el) => {
       if (!el) return
       const r = el.getBoundingClientRect()
@@ -39,10 +43,23 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
       const s = 1 + BOOST * f * f
       const dx = 10 * f * f
       el.style.transform = `translateX(${dx}px) scale(${s})`
-      el.style.zIndex = String(Math.round(f * 50))
+      el.style.zIndex = f > 0.05 ? String(Math.round(f * 50)) : ""
     })
   }
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    latestY.current = e.clientY
+    if (rafRef.current == null) {
+      rafRef.current = requestAnimationFrame(applyFrame)
+    }
+  }
+
   const reset = () => {
+    latestY.current = null
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
     itemRefs.current.forEach((el) => {
       if (!el) return
       el.style.transform = ""
@@ -77,8 +94,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
       </div>
 
       <div
-        ref={listRef}
-        onMouseMove={(e) => applyProximity(e.clientY)}
+        onMouseMove={onMouseMove}
         onMouseLeave={reset}
         className={cn("flex flex-col gap-2.5", collapsed && "items-center")}
       >

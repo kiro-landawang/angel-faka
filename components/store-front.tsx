@@ -93,12 +93,11 @@ const ProductCard = memo(function ProductCard({
       disabled={soldOut}
       onClick={() => onBuy(product)}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] text-left backdrop-blur-md shadow-[0_6px_20px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-[#E2725B]/50 hover:shadow-[0_14px_40px_rgba(226,114,91,0.28)]",
+        "group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] text-left shadow-[0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-[#E2725B]/50 hover:shadow-[0_14px_40px_rgba(226,114,91,0.28)]",
         soldOut && "opacity-50"
       )}
     >
       <div className="relative h-40 sm:h-44" style={{ background: v.gradient }}>
-        <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/30 blur-xl" />
         {product.image && !imageFailed ? (
           <img
             src={product.image}
@@ -131,7 +130,7 @@ const ProductCard = memo(function ProductCard({
           <span className="text-base font-medium text-[#E2725B]">¥{Number(product.price).toFixed(2)}</span>
           <span
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-200",
+              "rounded-full px-3 py-1.5 text-xs font-medium transition-[box-shadow,transform] duration-200",
               soldOut
                 ? "bg-white/10 text-white/50"
                 : "bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-white group-hover:shadow-[0_6px_16px_rgba(226,114,91,0.45)]"
@@ -171,16 +170,6 @@ export function StoreFront({
   const [couponError, setCouponError] = useState("")
   const [paymentError, setPaymentError] = useState("")
 
-  const allProducts = useMemo(() => categories.flatMap((category) => category.products), [categories])
-  const featuredProduct = useMemo(
-    () =>
-      [...allProducts].sort((a, b) => {
-        if (a.stock > 0 && b.stock <= 0) return -1
-        if (a.stock <= 0 && b.stock > 0) return 1
-        return Number(b.price) - Number(a.price)
-      })[0],
-    [allProducts]
-  )
   const currentCategory = useMemo(
     () => categories.find((category) => category.id === activeCategory) ?? categories[0],
     [categories, activeCategory]
@@ -310,58 +299,11 @@ export function StoreFront({
     )
   }
 
-  const featuredVisual = featuredProduct ? productVisual(featuredProduct.id) : null
-
   return (
     <div className="relative w-full">
       <Mascot />
-      {/* decorative blur blobs */}
-      <div className="pointer-events-none absolute -left-10 -top-6 -z-0 h-40 w-40 rounded-full bg-[#E2725B]/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-8 top-48 -z-0 h-48 w-48 rounded-full bg-[#7858c8]/20 blur-3xl" />
 
       <div className="relative z-10">
-        {featured && featuredProduct && featuredVisual && (
-          <section className="relative mb-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#E2725B]/15 to-[#7858c8]/10 p-6 shadow-[0_10px_40px_rgba(120,40,160,0.18)] sm:p-8">
-            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-            <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-[#E2725B]/15 blur-2xl" />
-            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
-              <div
-                className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-5xl shadow-inner sm:h-32 sm:w-32"
-                style={{ background: featuredVisual.gradient }}
-              >
-                {featuredProduct.image ? (
-                  <img
-                    src={featuredProduct.image}
-                    alt={featuredProduct.name}
-                    decoding="async"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <span aria-hidden>{featuredVisual.emoji}</span>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium text-[#E2725B]">本周主推</p>
-                <h1 className="mt-1 text-2xl font-medium tracking-tight text-white sm:text-3xl">{featuredProduct.name}</h1>
-                <p className="mt-1.5 text-sm text-white/60">
-                  {featuredProduct.stock > 0 ? `现货 ${featuredProduct.stock} 份 · 邮箱自动收货` : "暂时缺货"}
-                </p>
-              </div>
-              <div className="flex items-center gap-4 sm:flex-col sm:items-end">
-                <span className="text-2xl font-medium text-[#E2725B]">¥{Number(featuredProduct.price).toFixed(2)}</span>
-                <Button
-                  className="h-11 rounded-full bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-6 text-white shadow-[0_8px_20px_rgba(226,114,91,0.45)] transition-transform duration-200 hover:scale-[1.03] active:scale-95"
-                  disabled={featuredProduct.stock <= 0}
-                  onClick={() => handleBuyClick(featuredProduct)}
-                >
-                  {featuredProduct.stock > 0 ? "立即购买" : "售罄"}
-                </Button>
-              </div>
-            </div>
-          </section>
-        )}
-
         {featured && (
           <div className="mb-6 grid grid-cols-3 gap-3">
             {[
@@ -404,7 +346,6 @@ export function StoreFront({
                 className="relative mx-6 mt-6 h-32 overflow-hidden rounded-2xl sm:h-36"
                 style={{ background: productVisual(selectedProduct.id).gradient }}
               >
-                <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/30 blur-lg" />
                 {selectedProduct.image ? (
                   <img
                     src={selectedProduct.image}
