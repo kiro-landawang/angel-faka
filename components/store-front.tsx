@@ -54,6 +54,14 @@ function categoryEmoji(name: string) {
   return "🌸"
 }
 
+// 库存概况分级（阈值自定）：售空 ≤0、少 <10、多 <50、很多 ≥50
+function stockTier(stock: number) {
+  if (stock <= 0) return { label: "售空", badge: "bg-zinc-900/55 text-white", sub: "暂时缺货" }
+  if (stock < 10) return { label: "少", badge: "bg-[#E2725B]/85 text-white", sub: "库存紧张 · 自动发货" }
+  if (stock < 50) return { label: "多", badge: "bg-white/85 text-zinc-600", sub: "现货充足 · 自动发货" }
+  return { label: "很多", badge: "bg-emerald-500/80 text-white", sub: "现货极充足 · 自动发货" }
+}
+
 interface Product {
   id: string
   name: string
@@ -87,6 +95,7 @@ const ProductCard = memo(function ProductCard({
   const [imageFailed, setImageFailed] = useState(false)
   const v = productVisual(product.id)
   const soldOut = product.stock <= 0
+  const tier = stockTier(product.stock)
   return (
     <button
       type="button"
@@ -119,16 +128,16 @@ const ProductCard = memo(function ProductCard({
         <span
           className={cn(
             "absolute left-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-medium",
-            soldOut ? "bg-zinc-900/55 text-white" : "bg-white/85 text-zinc-600"
+            tier.badge
           )}
         >
-          {soldOut ? "缺货" : "现货"}
+          {tier.label}
         </span>
       </div>
       <div className="flex flex-1 flex-col p-4">
         <p className="truncate text-[15px] font-semibold text-zinc-900">{product.name}</p>
         <p className="mt-1 text-xs text-zinc-400">
-          {soldOut ? "暂时缺货" : `库存 ${product.stock} · 自动发货`}
+          {tier.sub}
         </p>
         <div className="mt-auto flex items-center justify-between pt-3">
           <span className="text-base font-semibold text-[#E2725B]">¥{Number(product.price).toFixed(2)}</span>
@@ -373,7 +382,7 @@ export function StoreFront({
             )}
             <DialogHeader className="px-6 pt-6">
               <DialogTitle className="text-xl font-semibold tracking-tight text-zinc-900">{selectedProduct?.name}</DialogTitle>
-              <p className="text-xs text-zinc-400">库存 {selectedProduct?.stock} · 支付后邮箱收货</p>
+              <p className="text-xs text-zinc-400">{selectedProduct ? `${stockTier(Number(selectedProduct.stock)).sub} · 支付后邮箱收货` : ""}</p>
             </DialogHeader>
 
             {selectedProduct?.description && (
