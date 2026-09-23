@@ -97,8 +97,14 @@ export async function POST(req: Request) {
         where: { code: couponCode.trim().toUpperCase() }
       });
 
-      if (!coupon || coupon.isUsed || coupon.merchantId !== product.merchantId) {
-        return NextResponse.json({ error: "优惠码无效或已被使用" }, { status: 400 });
+      if (!coupon) {
+        return NextResponse.json({ error: "优惠码不存在" }, { status: 400 });
+      }
+      if (coupon.isUsed) {
+        return NextResponse.json({ error: "该优惠码已被使用" }, { status: 400 });
+      }
+      if (coupon.merchantId !== product.merchantId) {
+        return NextResponse.json({ error: "该优惠码不适用于此商户的商品" }, { status: 400 });
       }
 
       // 使用次数上限检查：0 = 无限使用；已达上限则拒绝
@@ -119,6 +125,32 @@ export async function POST(req: Request) {
       }
       
       validCouponId = coupon.id;
+
+      // Order.couponId 带唯一约束：一张券只能挂在一个订单上。
+      // 若之前有一次下单（未支付 / 支付初始化失败）已经占用了这张券，
+      // 顾客再次下单会因唯一约束直接报错。这里先把「未支付订单」的占用释放掉。
+      const holderOrder = await prisma.order.findFirst({
+        where: { couponId: validCouponId },
+        select: { id: true, status: true },
+      });
+
+      if (holderOrder) {
+        if (holderOrder.status !== "PENDING") {
+          return NextResponse.json({ error: "该优惠券已被使用" }, { status: 400 });
+        }
+        await prisma.$transaction([
+          prisma.order.update({ where: { id: holderOrder.id }, data: { couponId: null } }),
+          prisma.coupon.update({
+            where: { id: validCouponId },
+            data: {
+              usedCount: Math.max(0, (coupon.usedCount || 0) - 1),
+              isUsed: false,
+              usedAt: null,
+            },
+          }),
+        ]);
+        log.info({ couponId: validCouponId, releasedOrderId: holderOrder.id }, "Released coupon held by unpaid order");
+      }
     }
 
     // 3. Calculate Amount
@@ -191,8 +223,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "支付初始化失败，请稍后重试或联系客服" }, { status: 500 });
     }
 
-  } catch (error) {
-    log.error({ err: error instanceof Error ? error.message : "unknown" }, "Order create error");
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch (error: any) {
+    log.error({ err: error instanceof Error ? error.message : "unknown", code: error?.code }, "Order create error");
+    let message = "Internal Server Error";
+    if (error?.code === "P2002") message = "该优惠券已被其他订单占用，请稍后重试或联系客服";
+    else if (error?.code === "P2025") message = "相关数据不存在，请刷新页面后重试";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

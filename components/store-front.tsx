@@ -485,7 +485,7 @@ export function StoreFront({
                         >
                           <span>{channel.name}</span>
                           <span className="flex items-center gap-2">
-                            {channel.fee && channel.fee > 0 && (
+                            {Number(channel.fee ?? 0) > 0 && (
                               <span className="text-xs text-zinc-400">+{channel.fee}%</span>
                             )}
                             <span
