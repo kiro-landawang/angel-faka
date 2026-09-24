@@ -20,7 +20,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "无效的优惠码" }, { status: 404 });
     }
 
-    if (coupon.isUsed) {
+    // usageLimit === 0 表示「无限使用」，这类券永不被 isUsed 拦截（含历史脏数据）
+    if (coupon.isUsed && coupon.usageLimit !== 0) {
       return NextResponse.json({ error: "该优惠码已被使用" }, { status: 400 });
     }
 

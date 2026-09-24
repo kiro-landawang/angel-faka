@@ -26,6 +26,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
     }
 
+    // 把券设为「无限使用」时，顺带解除它在订单上的占用
+    // （Order.couponId 唯一约束：一张券只能挂在一个订单上，会让无限券被首个订单卡死）
+    if (data.usageLimit === 0) {
+      await prisma.order.updateMany({
+        where: { couponId: id },
+        data: { couponId: null },
+      });
+    }
+
     const coupon = await prisma.coupon.update({
       where: { id },
       data

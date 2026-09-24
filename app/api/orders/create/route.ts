@@ -100,7 +100,8 @@ export async function POST(req: Request) {
       if (!coupon) {
         return NextResponse.json({ error: "优惠码不存在" }, { status: 400 });
       }
-      if (coupon.isUsed) {
+      // usageLimit === 0 表示「无限使用」，这类券永不应被 isUsed 标记拦下（历史脏数据也一并忽略）
+      if (coupon.isUsed && coupon.usageLimit !== 0) {
         return NextResponse.json({ error: "该优惠码已被使用" }, { status: 400 });
       }
       if (coupon.merchantId !== product.merchantId) {
@@ -126,30 +127,39 @@ export async function POST(req: Request) {
       
       validCouponId = coupon.id;
 
-      // Order.couponId 带唯一约束：一张券只能挂在一个订单上。
-      // 若之前有一次下单（未支付 / 支付初始化失败）已经占用了这张券，
-      // 顾客再次下单会因唯一约束直接报错。这里先把「未支付订单」的占用释放掉。
+      // Order.couponId 带唯一约束（数据库层面一张券只能挂在一个订单上），
+      // 但业务上「无限使用 / 多次使用」的券必须能被多个订单使用。
+      // 因此每次新下单前，先把此前占用该券的订单解绑，再把券挂到本次订单上；
+      // 只有占用方仍是「未支付(PENDING)」时，才回退使用计数（未支付不算真正核销）。
       const holderOrder = await prisma.order.findFirst({
         where: { couponId: validCouponId },
         select: { id: true, status: true },
       });
 
       if (holderOrder) {
-        if (holderOrder.status !== "PENDING") {
-          return NextResponse.json({ error: "该优惠券已被使用" }, { status: 400 });
-        }
-        await prisma.$transaction([
+        const holderUnpaid = holderOrder.status === "PENDING";
+        const ops: any[] = [
           prisma.order.update({ where: { id: holderOrder.id }, data: { couponId: null } }),
-          prisma.coupon.update({
-            where: { id: validCouponId },
-            data: {
-              usedCount: Math.max(0, (coupon.usedCount || 0) - 1),
-              isUsed: false,
-              usedAt: null,
-            },
-          }),
-        ]);
-        log.info({ couponId: validCouponId, releasedOrderId: holderOrder.id }, "Released coupon held by unpaid order");
+        ];
+        if (holderUnpaid) {
+          const rolledBack = Math.max(0, (coupon.usedCount || 0) - 1);
+          coupon.usedCount = rolledBack;
+          ops.push(
+            prisma.coupon.update({
+              where: { id: validCouponId },
+              data: {
+                usedCount: rolledBack,
+                isUsed: false,
+                usedAt: null,
+              },
+            })
+          );
+        }
+        await prisma.$transaction(ops);
+        log.info(
+          { couponId: validCouponId, releasedOrderId: holderOrder.id, holderUnpaid },
+          "Released coupon held by previous order"
+        );
       }
     }
 
