@@ -64,7 +64,7 @@ export function OrderLookup() {
           订单
         </button>
       </DialogTrigger>
-      <DialogContent className="border border-border bg-card text-card-foreground sm:max-w-lg sm:rounded-[18px]">
+      <DialogContent className="dialog-dark border border-border bg-card text-card-foreground sm:max-w-lg sm:rounded-[18px]">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl font-medium tracking-tight">查找订单</DialogTitle>
           <DialogDescription>输入邮箱、手机号或订单号</DialogDescription>

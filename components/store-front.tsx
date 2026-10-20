@@ -387,7 +387,7 @@ export function StoreFront({
 
         <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
           {/* 购买弹窗：暗玻璃（去 backdrop-blur：大面积模糊在低端机上掉帧） */}
-          <DialogContent className="max-h-[90vh] overflow-y-auto border border-border bg-card p-0 text-card-foreground shadow-[0_30px_80px_rgba(0,0,0,0.6)] sm:max-w-md sm:rounded-[18px]">
+          <DialogContent className="dialog-dark max-h-[90vh] overflow-y-auto border border-border bg-card p-0 text-card-foreground shadow-[0_30px_80px_rgba(0,0,0,0.6)] sm:max-w-md sm:rounded-[18px]">
             {selectedProduct && (
               <div
                 className="relative mx-6 mt-6 h-32 overflow-hidden rounded-2xl sm:h-36"

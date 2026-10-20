@@ -110,6 +110,35 @@
   --tw-prose-td-borders: hsl(240 6% 15%);
 }
 
+/* ------------------------------------------------------------------
+ * 暗色弹窗：Radix Dialog 渲染在 body 的 portal 里，跳出 .theme-dark
+ * 作用域导致 token 回退亮色。把同一套暗色 token 挂到弹窗根元素上，
+ * 内部所有 token 化类（bg-background / text-muted-foreground / 关闭
+ * 按钮 hover 等）自动变暗；后台弹窗不加这个 class，不受影响。
+ * ------------------------------------------------------------------ */
+.dialog-dark {
+  --background: 240 7% 9%;
+  --foreground: 0 0% 96%;
+  --card: 240 7% 9%;
+  --card-foreground: 0 0% 96%;
+  --popover: 240 7% 9%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 12 70% 62%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 6% 14%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 240 6% 14%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 240 6% 14%;
+  --accent-foreground: 0 0% 96%;
+  --destructive: 0 72% 56%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 6% 15%;
+  --input: 240 6% 15%;
+  --ring: 12 70% 62%;
+  color-scheme: dark;
+}
+
 /* Flowing rainbow text used by the storefront promo banner */
 @keyframes rainbow-pan {
   0% {
