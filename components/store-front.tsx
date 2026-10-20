@@ -105,7 +105,9 @@ const ProductCard = memo(function ProductCard({
         // 白底液态玻璃：半透明 + 背景折射 + 圆角小块
         "group relative flex flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/75 text-left shadow-[0_8px_30px_rgba(22,22,40,0.07)]",
         // 微交互：鼠标一放轻轻浮起、边框染赤陶、投影变暖
-        "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
+        // 注：不要给每张卡加 will-change-transform —— 一屏 20+ 张卡会各自
+        // 提升为独立合成层，显存与合成开销反而让滚动更卡
+        "transition-[transform,box-shadow,border-color] duration-300 ease-out",
         "hover:-translate-y-2 hover:border-[#E2725B]/45 hover:shadow-[0_22px_60px_rgba(226,114,91,0.22)]",
         soldOut && "opacity-60"
       )}

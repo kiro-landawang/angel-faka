@@ -89,3 +89,54 @@
   /* 动画已关闭：避免持续重绘造成页面卡顿，保留静态彩虹渐变 */
   animation: none;
 }
+
+/* ------------------------------------------------------------------
+ * 侧边栏分类「邻近放大」—— 纯 CSS 版
+ * 旧实现靠 JS 每帧 getBoundingClientRect() + 写 transform，
+ * 读-写混排导致每帧强制同步布局 N 次，鼠标一动就掉帧。
+ * 这里用 :hover + :has(+ :hover) 在合成器线程完成，既不触发布局，
+ * 也不需要任何 JS 参与。
+ * ------------------------------------------------------------------ */
+.nav-item {
+  /* 移动端只有颜色过渡；桌面端下面再补 transform */
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .nav-list .nav-item {
+    transform-origin: left center;
+    transition:
+      transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+      color 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .nav-list .nav-item:hover {
+    transform: translateX(10px) scale(1.06);
+    position: relative;
+    z-index: 2;
+  }
+  /* 相邻两项轻微跟随，形成"靠近即放大"的坡度 */
+  .nav-list .nav-item:hover + .nav-item,
+  .nav-list .nav-item:has(+ .nav-item:hover) {
+    transform: translateX(4px) scale(1.03);
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-list .nav-item,
+  .nav-list .nav-item:hover,
+  .nav-list .nav-item:hover + .nav-item,
+  .nav-list .nav-item:has(+ .nav-item:hover) {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
