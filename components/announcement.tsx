@@ -8,7 +8,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import ReactMarkdown from "react-markdown"
+import dynamic from "next/dynamic"
+
+// 不要把 react-markdown 静态 import 进来：它会把 markdown 解析器 + lowlight
+// 代码高亮（约 115KB JS）塞进首页的首屏包，而绝大多数访客根本不会打开公告弹窗。
+// 改成 dynamic 之后，这个 chunk 只会在用户真正点开公告时才去下载。
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  ssr: false,
+  loading: () => <span className="text-sm text-muted-foreground">加载中…</span>,
+})
 
 interface AnnouncementProps {
   content?: string

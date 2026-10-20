@@ -5,6 +5,14 @@
   "engines": {
     "node": "22.x"
   },
+  "browserslist": [
+    "chrome >= 105",
+    "edge >= 105",
+    "firefox >= 121",
+    "safari >= 15.4",
+    "ios_saf >= 15.4",
+    "not dead"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
