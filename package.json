@@ -3,11 +3,12 @@
   "version": "1.1.6",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "db:push": "node scripts/prepare-netlify.mjs && prisma db push --skip-generate",
     "build:netlify": "node scripts/prepare-netlify.mjs && prisma db push --schema=prisma/schema.prisma --skip-generate && prisma generate --schema=prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "eslint"
