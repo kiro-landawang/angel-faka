@@ -60,7 +60,7 @@ export function OrderLookup() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="text-[13px] text-muted-foreground transition-colors hover:text-foreground">
+        <button type="button" className="whitespace-nowrap text-[13px] text-muted-foreground transition-colors hover:text-foreground">
           订单
         </button>
       </DialogTrigger>
