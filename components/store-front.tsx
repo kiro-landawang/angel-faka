@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2, Minus, Plus, Check, X } from "lucide-react"
-import { Mascot } from "@/components/mascot"
 import { SidebarNav } from "@/components/sidebar-nav"
 import { cn } from "@/lib/utils"
 
@@ -328,8 +327,6 @@ export function StoreFront({
 
   return (
     <div className="relative w-full">
-      <Mascot />
-
       <div className="relative z-10 pt-3">
         {featured && featureProduct && (
           /* 主推位：1px 渐变描边宽卡（静态），首屏视觉锚点 */
