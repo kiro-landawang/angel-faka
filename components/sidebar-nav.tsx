@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export interface SidebarCategory {
@@ -17,18 +17,56 @@ interface SidebarNavProps {
 
 /**
  * 白底液态玻璃分类导航
- * - 桌面端：固定竖直列表，可折叠（展开显文字 / 收起仅图标），当前项赤陶色高亮
+ * - 桌面端：固定竖直分类列表，可折叠（展开显文字 / 收起仅图标），当前项赤陶色高亮
+ * - 桌面端：鼠标靠近分类时按距离平滑放大（二次项衰减），rAF 节流，离开还原
  * - 移动端（<md）：整条变为全宽横向滚动分类条，折叠按钮隐藏
- *
- * 性能说明（2026-10-20 重做）：
- *   旧版在列表上挂 mousemove + rAF，每帧对「每个分类」调 getBoundingClientRect()
- *   再写 transform —— 读-写-读-写造成强制同步布局（layout thrashing），
- *   鼠标在侧栏移动时整页掉帧。
- *   现改为纯 CSS 邻近放大（见 globals.css 的 .nav-item 规则），
- *   JS 只保留必需的折叠/点击状态。
  */
 export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const latestY = useRef<number | null>(null)
+  const rafRef = useRef<number | null>(null)
+
+  const RANGE = 130 // 影响半径(px)
+  const BOOST = 0.16 // 最大放大比例
+
+  const applyFrame = () => {
+    rafRef.current = null
+    const my = latestY.current
+    if (my == null) return
+    // 仅桌面端做邻近放大（移动端为横向滚动，按 Y 计算无意义）
+    if (typeof window !== "undefined" && !window.matchMedia("(min-width: 768px)").matches) return
+    itemRefs.current.forEach((el) => {
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      const cy = r.top + r.height / 2
+      const f = Math.max(0, 1 - Math.abs(my - cy) / RANGE)
+      const s = 1 + BOOST * f * f
+      const dx = 12 * f * f
+      el.style.transform = `translateX(${dx}px) scale(${s})`
+      el.style.zIndex = f > 0.05 ? String(Math.round(f * 50)) : ""
+    })
+  }
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    latestY.current = e.clientY
+    if (rafRef.current == null) {
+      rafRef.current = requestAnimationFrame(applyFrame)
+    }
+  }
+
+  const reset = () => {
+    latestY.current = null
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    itemRefs.current.forEach((el) => {
+      if (!el) return
+      el.style.transform = ""
+      el.style.zIndex = ""
+    })
+  }
 
   return (
     <aside
@@ -61,20 +99,27 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
 
       {/* 移动端：横向滚动分类条；桌面端：竖直列表 */}
       <div
+        onMouseMove={onMouseMove}
+        onMouseLeave={reset}
         className={cn(
-          "nav-list flex gap-2.5 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0",
+          "flex gap-2.5 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0",
           collapsed && "md:items-center"
         )}
       >
-        {categories.map((cat) => {
+        {categories.map((cat, i) => {
           const active = cat.id === activeId
           return (
             <button
               key={cat.id}
+              ref={(el) => {
+                itemRefs.current[i] = el
+              }}
               type="button"
               onClick={() => onSelect(cat.id)}
+              style={{ transformOrigin: "left center" }}
               className={cn(
-                "nav-item flex shrink-0 items-center gap-2.5 rounded-xl border px-4 py-3 text-[14.5px] font-bold text-zinc-500",
+                "flex shrink-0 items-center gap-2.5 rounded-xl border px-4 py-3 text-[14.5px] font-bold text-zinc-500 will-change-transform",
+                "transition-[color,background-color,border-color,box-shadow,transform] duration-200",
                 collapsed ? "md:h-[52px] md:w-[52px] md:justify-center md:gap-0 md:px-0" : "",
                 active
                   ? "border-transparent bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-white shadow-[0_8px_26px_rgba(226,114,91,0.45)]"
