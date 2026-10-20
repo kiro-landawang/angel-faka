@@ -51,8 +51,8 @@ export function OrderLookup() {
   }
 
   const statusLabel = (status: string) => {
-    if (status === "PAID") return { text: "已支付", className: "bg-[#EAF3DE] text-[#3B6D11]" }
-    if (status === "PENDING") return { text: "待支付", className: "bg-[#FAEEDA] text-[#854F0B]" }
+    if (status === "PAID") return { text: "已支付", className: "bg-emerald-500/15 text-emerald-500" }
+    if (status === "PENDING") return { text: "待支付", className: "bg-amber-500/15 text-amber-500" }
     if (status === "EXPIRED") return { text: "已过期", className: "bg-secondary text-muted-foreground" }
     return { text: status, className: "bg-secondary text-muted-foreground" }
   }
@@ -64,7 +64,7 @@ export function OrderLookup() {
           订单
         </button>
       </DialogTrigger>
-      <DialogContent className="border-none bg-background p-0 sm:max-w-lg sm:rounded-3xl">
+      <DialogContent className="border border-border bg-card text-card-foreground sm:max-w-lg sm:rounded-[18px]">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl font-medium tracking-tight">查找订单</DialogTitle>
           <DialogDescription>输入邮箱、手机号或订单号</DialogDescription>
@@ -75,16 +75,16 @@ export function OrderLookup() {
             placeholder="联系方式 / 订单号"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-11 rounded-xl border-none bg-white shadow-none"
+            className="h-11 rounded-xl border border-white/10 bg-white/[0.05] shadow-none placeholder:text-zinc-500"
           />
-          <Button type="submit" disabled={loading} className="h-11 rounded-xl px-5">
+          <Button type="submit" disabled={loading} className="h-11 rounded-xl bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-5 text-white transition-opacity hover:opacity-90">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "查询"}
           </Button>
         </form>
 
         <div className="max-h-[50vh] space-y-2 overflow-y-auto px-6 pb-6">
           {hasSearched && results.length === 0 && (
-            <div className="rounded-2xl bg-white px-4 py-10 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-10 text-center text-sm text-muted-foreground">
               未找到相关订单
             </div>
           )}
@@ -96,7 +96,7 @@ export function OrderLookup() {
                 key={order.orderNo}
                 href={`/orders/${order.orderNo}`}
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-between rounded-2xl bg-white px-4 py-3"
+                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.07]"
               >
                 <div>
                   <p className="text-sm font-medium">{order.product.name}</p>

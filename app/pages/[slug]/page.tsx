@@ -34,11 +34,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-background text-foreground">
+    <main className="theme-dark flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
       <div className="mx-auto w-full max-w-3xl flex-1 px-5 py-12">
         <Link href="/pages" className="text-sm text-muted-foreground hover:text-foreground">返回帮助</Link>
-        <article className="prose prose-zinc mt-6 max-w-none prose-headings:font-medium">
+        <article className="prose mt-6 max-w-none prose-headings:font-medium">
           <h1>{article.title}</h1>
           <div className="text-sm text-muted-foreground">
             更新于 {new Date(article.updatedAt).toLocaleDateString()}

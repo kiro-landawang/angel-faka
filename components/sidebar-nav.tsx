@@ -16,7 +16,7 @@ interface SidebarNavProps {
 }
 
 /**
- * 白底液态玻璃分类导航
+ * 分类导航（暗玻璃）
  * - 桌面端：固定竖直分类列表，可折叠（展开显文字 / 收起仅图标），当前项赤陶色高亮
  * - 桌面端：鼠标靠近分类时邻近放大 —— 纯 CSS 实现（:hover + :has(+ :hover)），
  *   见 app/globals.css 的 .nav-item 规则
@@ -35,18 +35,17 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
   return (
     <aside
       className={cn(
-        // 白底液态玻璃：半透明 + 浅色描边（去掉了 backdrop-blur：
-        // 侧边栏背后就是纯色页面背景，模糊没有视觉收益，却在滚动时逐帧重采样）
-        "w-full rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_8px_30px_rgba(22,22,40,0.07)]",
+        // 暗玻璃：细描边 + 半透明底，无 backdrop-blur（背后是纯色底，模糊无视觉收益）
+        "w-full rounded-[18px] border border-white/[0.06] bg-white/[0.03] p-4",
         "transition-[width] duration-300 md:shrink-0",
-        collapsed ? "md:w-24" : "md:w-72",
+        collapsed ? "md:w-24" : "md:w-60",
         "max-md:rounded-2xl"
       )}
     >
       <div className="mb-3 flex items-center gap-2 px-1">
         <span
           className={cn(
-            "text-[13px] font-extrabold tracking-[0.15em] text-zinc-400 transition-opacity",
+            "text-[11.5px] font-bold uppercase tracking-[0.14em] text-zinc-500 transition-opacity",
             collapsed && "pointer-events-none opacity-0"
           )}
         >
@@ -56,7 +55,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           aria-label="折叠 / 展开"
-          className="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white/70 text-[14px] text-zinc-500 transition hover:bg-[#E2725B]/15 hover:text-[#E2725B] md:flex"
+          className="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[14px] text-zinc-400 transition-colors hover:border-white/20 hover:text-primary md:flex"
         >
           {collapsed ? "»" : "«"}
         </button>
@@ -77,15 +76,15 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
               type="button"
               onClick={() => onSelect(cat.id)}
               className={cn(
-                "nav-item flex shrink-0 items-center gap-2.5 rounded-xl border px-4 py-3 text-[14.5px] font-bold text-zinc-500",
+                "nav-item flex shrink-0 items-center gap-2.5 rounded-xl border px-4 py-2.5 text-[14.5px] font-semibold text-zinc-400",
                 collapsed ? "md:h-[52px] md:w-[52px] md:justify-center md:gap-0 md:px-0" : "",
                 active
-                  ? "border-transparent bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-white shadow-[0_8px_26px_rgba(226,114,91,0.45)]"
-                  : "border-zinc-200 bg-white/60 hover:border-[#E2725B]/40 hover:text-zinc-900"
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-white/[0.07] bg-white/[0.04] hover:border-white/20 hover:text-zinc-100"
               )}
             >
               {cat.emoji && (
-                <span className="text-[19px] leading-none" aria-hidden>
+                <span className="text-[17px] leading-none" aria-hidden>
                   {cat.emoji}
                 </span>
               )}
@@ -97,7 +96,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
 
       <p
         className={cn(
-          "mt-3 text-center text-[11.5px] text-zinc-400 transition-opacity max-md:hidden",
+          "mt-3 text-center text-[11.5px] text-zinc-600 transition-opacity max-md:hidden",
           collapsed && "pointer-events-none opacity-0"
         )}
       >

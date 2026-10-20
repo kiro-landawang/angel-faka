@@ -12,14 +12,14 @@ export default async function HelpCenterPage() {
   });
 
   return (
-    <main className="flex min-h-screen flex-col bg-background text-foreground">
+    <main className="theme-dark flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
       <div className="mx-auto w-full max-w-3xl flex-1 px-5 py-12">
         <h1 className="text-4xl font-medium tracking-tight">帮助中心</h1>
         <p className="mt-3 text-sm text-muted-foreground">取货、售后和常见问题</p>
         <div className="mt-8 space-y-3">
           {articles.length === 0 ? (
-            <div className="rounded-2xl bg-white px-5 py-16 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">
               暂无内容
             </div>
           ) : (
@@ -27,7 +27,7 @@ export default async function HelpCenterPage() {
               <Link
                 key={article.slug}
                 href={`/pages/${article.slug}`}
-                className="flex items-center justify-between rounded-2xl bg-white px-5 py-4"
+                className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:bg-white/[0.04]"
               >
                 <div>
                   <p className="text-[15px] font-medium">{article.title}</p>

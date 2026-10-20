@@ -1,6 +1,5 @@
 import { Navbar } from "@/components/navbar";
 import { StoreFront } from "@/components/store-front";
-import { RainbowBanner } from "@/components/rainbow-banner";
 import { prisma } from "@/lib/prisma";
 import { Announcement } from "@/components/announcement";
 import { StoreFooter } from "@/components/store-footer";
@@ -62,18 +61,18 @@ export default async function Home() {
   }));
 
   return (
-    <main className="relative flex min-h-screen flex-col text-zinc-900">
-      {/* 背景：近白底 + 极淡彩色光斑，供液态玻璃折射出苹果那种会流动的高级感 */}
+    <main className="theme-dark relative flex min-h-screen flex-col text-foreground">
+      {/* 暗色底 + 三团静态氛围光（radial-gradient 只画一次，无滤镜无动画，滚动零重绘） */}
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[#0A0A0C]" />
       <div
         className="pointer-events-none fixed inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(60% 50% at 12% 8%, rgba(226,114,91,0.12), transparent 60%), radial-gradient(55% 45% at 88% 18%, rgba(140,120,230,0.12), transparent 60%), radial-gradient(60% 50% at 75% 92%, rgba(90,160,230,0.10), transparent 60%), #fbfbfd",
+            "radial-gradient(45% 42% at 10% 2%, rgba(226,114,91,0.16), transparent 62%), radial-gradient(40% 38% at 92% 14%, rgba(120,80,220,0.13), transparent 62%), radial-gradient(50% 46% at 60% 100%, rgba(226,114,91,0.07), transparent 62%)",
         }}
       />
       <Navbar />
-      <div className="mx-auto w-full max-w-7xl px-5 pt-8 sm:px-8 lg:px-10">
-        <RainbowBanner />
+      <div className="mx-auto w-full max-w-7xl flex-1 px-5 sm:px-8 lg:px-10">
         <Announcement content={announcement?.value || undefined} />
         <StoreFront categories={categories} featured />
       </div>

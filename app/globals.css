@@ -61,6 +61,55 @@
   }
 }
 
+/* ------------------------------------------------------------------
+ * 暗色沉浸主题（公共前台专用）
+ * 只在根元素带 .theme-dark 的页面生效（首页/帮助/店铺），admin 不加这个
+ * class，保持亮色不受影响。所有 Token 化组件（bg-background / text-
+ * muted-foreground / border-border / bg-card ...）会自动切换到暗色。
+ * ------------------------------------------------------------------ */
+.theme-dark {
+  --background: 240 10% 4%;        /* #0A0A0C */
+  --foreground: 0 0% 96%;
+  --card: 240 7% 9%;               /* #131316 */
+  --card-foreground: 0 0% 96%;
+  --popover: 240 7% 9%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 12 70% 62%;           /* 陶土 #E2725B */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 6% 14%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 240 6% 14%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 12 70% 62%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 56%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 6% 15%;
+  --input: 240 6% 15%;
+  --ring: 12 70% 62%;
+  color-scheme: dark;
+}
+
+/* 暗色页里的 markdown 排版（typography 插件变量整体换成暗色系） */
+.theme-dark .prose {
+  --tw-prose-body: hsl(240 5% 75%);
+  --tw-prose-headings: hsl(0 0% 96%);
+  --tw-prose-lead: hsl(240 5% 75%);
+  --tw-prose-links: hsl(12 70% 66%);
+  --tw-prose-bold: hsl(0 0% 96%);
+  --tw-prose-counters: hsl(240 5% 55%);
+  --tw-prose-bullets: hsl(240 5% 40%);
+  --tw-prose-hr: hsl(240 6% 18%);
+  --tw-prose-quotes: hsl(0 0% 96%);
+  --tw-prose-quote-borders: hsl(12 70% 55%);
+  --tw-prose-captions: hsl(240 5% 55%);
+  --tw-prose-code: hsl(0 0% 96%);
+  --tw-prose-pre-code: hsl(0 0% 96%);
+  --tw-prose-pre-bg: hsl(240 6% 12%);
+  --tw-prose-th-borders: hsl(240 6% 18%);
+  --tw-prose-td-borders: hsl(240 6% 15%);
+}
+
 /* Flowing rainbow text used by the storefront promo banner */
 @keyframes rainbow-pan {
   0% {
