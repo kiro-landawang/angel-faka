@@ -36,6 +36,14 @@ export function Navbar() {
           ))}
           <OrderLookup />
           <a
+            href="https://gobang-6e6.pages.dev/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-3.5 py-1.5 text-[13px] font-bold text-white shadow-[0_8px_26px_rgba(226,114,91,0.32)] transition-transform hover:scale-[1.03]"
+          >
+            五子棋入口
+          </a>
+          <a
             href="https://iacg.love/"
             target="_blank"
             rel="noopener noreferrer"
