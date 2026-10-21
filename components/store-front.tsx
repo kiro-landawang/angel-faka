@@ -134,13 +134,7 @@ const ProductCard = memo(function ProductCard({
         )}
         <div className="absolute left-3 top-3 flex items-center gap-1.5">
           {categoryName && (
-            <span
-              className="bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-2.5 py-0.5 text-[10px] font-bold tracking-[0.08em] text-white"
-              style={{
-                clipPath:
-                  "polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)",
-              }}
-            >
+            <span className="clip-ark-sm bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-2.5 py-0.5 text-[10px] font-bold tracking-[0.08em] text-white">
               {categoryName}
             </span>
           )}
@@ -160,16 +154,16 @@ const ProductCard = memo(function ProductCard({
           {tier.sub}
         </p>
         <div className="mt-auto flex items-center justify-between pt-3.5">
-          <span className="text-[20px] font-extrabold tracking-[-0.02em] text-zinc-50 [font-variant-numeric:tabular-nums]">
-            <span className="mr-0.5 align-baseline text-[13px] font-bold text-zinc-500">¥</span>
+          <span className="font-ark text-[22px] font-bold tracking-[0.01em] text-zinc-50 [font-variant-numeric:tabular-nums]">
+            <span className="mr-0.5 align-baseline text-[13px] font-semibold text-zinc-500">¥</span>
             {Number(product.price).toFixed(2)}
           </span>
           <span
             className={cn(
-              "rounded-[10px] border px-4 py-1.5 text-[13px] font-semibold transition-[background-color,border-color,color] duration-200",
+              "clip-ark-sm px-4 py-1.5 text-[13px] font-semibold tracking-[0.06em] transition-[background-color,color] duration-200",
               soldOut
-                ? "border-white/10 bg-white/[0.04] text-zinc-600"
-                : "border-white/15 bg-white/[0.06] text-zinc-200 group-hover:border-transparent group-hover:bg-gradient-to-br group-hover:from-[#E2725B] group-hover:to-[#C2553C] group-hover:text-white"
+                ? "bg-white/[0.04] text-zinc-600"
+                : "bg-white/[0.08] text-zinc-100 group-hover:bg-gradient-to-br group-hover:from-[#E2725B] group-hover:to-[#C2553C] group-hover:text-white"
             )}
           >
             {soldOut ? "售罄" : "购买"}
@@ -357,7 +351,7 @@ export function StoreFront({
                 {productVisual(featureProduct.id).emoji}
               </div>
               <div className="min-w-0">
-                <span className="inline-block rounded-full border border-primary/40 px-2.5 py-0.5 text-[11px] font-bold tracking-[0.1em] text-primary">
+                <span className="clip-ark-sm inline-block bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.1em] text-white">
                   本周主推
                 </span>
                 <h3 className="mt-2 truncate text-[19px] font-extrabold tracking-[-0.025em] text-zinc-50">
@@ -366,14 +360,14 @@ export function StoreFront({
                 <p className="mt-0.5 text-[13.5px] text-zinc-400">全场主推 · 支付后自动发货</p>
               </div>
               <div className="ml-auto flex items-center gap-5">
-                <span className="text-[28px] font-extrabold tracking-[-0.03em] text-zinc-50 [font-variant-numeric:tabular-nums]">
-                  <span className="mr-0.5 align-baseline text-[16px] font-bold text-zinc-500">¥</span>
+                <span className="font-ark text-[30px] font-bold tracking-[0.01em] text-zinc-50 [font-variant-numeric:tabular-nums]">
+                  <span className="mr-0.5 align-baseline text-[16px] font-semibold text-zinc-500">¥</span>
                   {Number(featureProduct.price).toFixed(2)}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleBuyClick(featureProduct)}
-                  className="rounded-xl bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-6 py-2.5 text-[14.5px] font-bold text-white shadow-[0_10px_34px_rgba(226,114,91,0.34)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+                  className="clip-ark bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-7 py-2.5 text-[14.5px] font-bold tracking-[0.06em] text-white shadow-[0_10px_34px_rgba(226,114,91,0.34)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
                 >
                   抢购
                 </button>

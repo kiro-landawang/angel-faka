@@ -218,3 +218,15 @@
   }
 }
 
+
+/* 方舟风几何字体（Rajdhani，next/font 自托管）：价格/编号等展示元素用 */
+.font-ark {
+  font-family: var(--font-ark), Inter, system-ui, sans-serif;
+}
+/* 方舟式对角切角（六边形） */
+.clip-ark {
+  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+}
+.clip-ark-sm {
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+}
