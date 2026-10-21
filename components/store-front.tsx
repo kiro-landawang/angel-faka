@@ -85,9 +85,11 @@ interface PaymentChannel {
 
 const ProductCard = memo(function ProductCard({
   product,
+  categoryName,
   onBuy,
 }: {
   product: Product
+  categoryName?: string
   onBuy: (p: Product) => void
 }) {
   const [imageFailed, setImageFailed] = useState(false)
@@ -130,14 +132,27 @@ const ProductCard = memo(function ProductCard({
             {v.emoji}
           </span>
         )}
-        <span
-          className={cn(
-            "absolute left-3 top-3 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-            tier.badge
+        <div className="absolute left-3 top-3 flex items-center gap-1.5">
+          {categoryName && (
+            <span
+              className="bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-2.5 py-0.5 text-[10px] font-bold tracking-[0.08em] text-white"
+              style={{
+                clipPath:
+                  "polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)",
+              }}
+            >
+              {categoryName}
+            </span>
           )}
-        >
-          {tier.label}
-        </span>
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+              tier.badge
+            )}
+          >
+            {tier.label}
+          </span>
+        </div>
       </div>
       <div className="flex flex-1 flex-col p-4">
         <p className="truncate text-[15.5px] font-semibold tracking-[-0.015em] text-zinc-100">{product.name}</p>
@@ -377,7 +392,12 @@ export function StoreFront({
           {/* 商品区：按一张隐形网络（栅格）对齐，等宽等距 */}
           <div className="grid flex-1 grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 lg:gap-6">
             {shelfProducts.map((product) => (
-              <ProductCard key={product.id} product={product} onBuy={handleBuyClick} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                categoryName={currentCategory?.name}
+                onBuy={handleBuyClick}
+              />
             ))}
           </div>
         </div>
