@@ -230,3 +230,9 @@
 .clip-ark-sm {
   clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
 }
+
+/* 移动端横向分类条右缘渐隐（"还能往右滑"的视觉暗示；滑到头由 JS 摘除） */
+.scroll-fade-r {
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 30px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 30px), transparent 100%);
+}
