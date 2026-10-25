@@ -1,12 +1,28 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { SignJWT, jwtVerify } from "jose";
 import { verifyPassword } from "@/lib/password";
 
 const COOKIE_NAME = process.env.COOKIE_NAME || "geekfaka_admin_session";
-const SESSION_DURATION = 60 * 60 * 24 * 14; // 14 Days
-const log = logger.child({ module: 'Auth' });
+const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 Days（缩短窗口：后台会话泄露的影响面）
+const log = logger.child({ module: "Auth" });
+
+// 设备指纹：会话与首次登录的 User-Agent 绑定。
+// cookie 即使被窃取，攻击者在其他浏览器/设备上重放也会因指纹不一致而失效。
+// 注意：浏览器大版本升级会改变 UA，届时需要重新登录——这是预期内的安全代价。
+function deviceFingerprint(ua: string): string {
+  return createHash("sha256")
+    .update(`${process.env.JWT_SECRET || "no-secret"}:${ua}`, "utf8")
+    .digest("hex")
+    .slice(0, 24);
+}
+
+async function currentFingerprint(): Promise<string> {
+  const h = headers();
+  return deviceFingerprint(h.get("user-agent") || "unknown");
+}
 
 // Resolve the JWT signing secret.
 // 重要：生产环境必须显式配置 JWT_SECRET（或 ADMIN_PASSWORD），禁止回退到
@@ -45,9 +61,16 @@ export async function isAuthenticated() {
     const { payload } = await jwtVerify(session.value, JWT_SECRET, {
       clockTolerance: "1m"
     });
-    
+
     if (payload.role !== "admin") {
       log.warn("Auth failed: Invalid role in token");
+      return false;
+    }
+
+    // 会话绑定设备指纹：与登录时不一致（cookie 被盗用/异机重放）直接失效
+    const fp = await currentFingerprint();
+    if (payload.fp !== fp) {
+      log.warn("Auth failed: Device fingerprint mismatch (stolen session or UA changed)");
       return false;
     }
 
@@ -76,7 +99,9 @@ export async function login(username: string, password: string) {
   if (allowedUsernames.includes(username) && await verifyPassword(password, validPassword)) {
     // Generate JWT - We remove internal expiration and rely on Cookie maxAge for session management.
     // This is more robust against time synchronization issues.
-    const token = await new SignJWT({ role: "admin" })
+    // fp: 会话绑定登录时的设备指纹（User-Agent），防盗用/异机重放
+    const fp = await currentFingerprint();
+    const token = await new SignJWT({ role: "admin", fp })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .sign(JWT_SECRET);
