@@ -131,15 +131,15 @@ export default function LotteryPage() {
       <main className="flex min-h-screen flex-col bg-background text-foreground">
         <Navbar />
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-12 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-md bg-primary/10 text-primary">
             <Gift className="h-8 w-8" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">需要先登录</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-gray-500">
             抽奖与积分兑换仅对注册用户开放。登录后即可用购买的卡密抽取抽奖次数。
           </p>
           <Link href="/login" className="mt-6">
-            <Button size="lg" className="h-12 rounded-xl bg-primary text-base text-primary-foreground shadow-[0_10px_30px_rgba(59,130,246,0.30)] hover:opacity-90">
+            <Button size="lg" className="h-12 rounded-md bg-primary text-base text-primary-foreground hover:opacity-90">
               去登录 / 注册
             </Button>
           </Link>
@@ -156,40 +156,41 @@ export default function LotteryPage() {
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
-      <div className="mx-auto w-full max-w-3xl flex-1 px-5 py-10">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
+      <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-5 sm:py-10">
+        {/* 顶部：标题 + 数据卡（手机竖排、桌面横排） */}
+        <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight">抽奖中心</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{email}</p>
+            <p className="mt-1 truncate text-sm text-gray-500">{email}</p>
           </div>
-          <div className="flex gap-3">
-            <div className="rounded-2xl bg-card px-4 py-3 text-center shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-              <p className="text-xs text-muted-foreground">我的积分</p>
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:shrink-0">
+            <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-center">
+              <p className="text-xs text-gray-500">我的积分</p>
               <p className="text-xl font-bold text-primary">{points}</p>
             </div>
-            <div className="rounded-2xl bg-card px-4 py-3 text-center shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-              <p className="text-xs text-muted-foreground">剩余抽奖</p>
-              <p className="text-xl font-bold text-foreground">{draws}</p>
+            <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-center">
+              <p className="text-xs text-gray-500">剩余抽奖</p>
+              <p className="text-xl font-bold text-gray-900">{draws}</p>
             </div>
           </div>
         </div>
 
-        {/* 抽奖转盘区 */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_16px_48px_rgba(15,23,42,0.10)]">
+        {/* 抽奖区 */}
+        <div className="rounded-md border border-gray-200 bg-white p-5">
           <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <div className="w-full text-center sm:w-auto sm:text-left">
+              <h2 className="flex items-center justify-center gap-2 text-lg font-semibold sm:justify-start">
                 <Sparkles className="h-5 w-5 text-primary" /> 幸运抽奖
               </h2>
-              <p className="mt-1 text-xs text-muted-foreground">购买卡密赠送的抽奖次数，抽中积分可兑换卡密</p>
-              {weights && <p className="mt-2 text-[11px] text-muted-foreground">{weights}</p>}
+              <p className="mt-1 text-xs text-gray-500">购买卡密赠送的抽奖次数，抽中积分可兑换卡密</p>
+              {weights && <p className="mt-2 text-[11px] text-gray-400">{weights}</p>}
             </div>
             <div className="flex flex-col items-center">
               <button
                 type="button"
                 onClick={handleDraw}
                 disabled={drawing || draws <= 0}
-                className="flex h-32 w-32 flex-col items-center justify-center rounded-full border-4 border-primary/20 bg-gradient-to-br from-primary/15 to-primary/5 text-primary transition-transform duration-200 active:scale-95 disabled:opacity-50"
+                className="flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-primary/20 bg-gradient-to-br from-primary/15 to-primary/5 text-primary transition-transform duration-200 active:scale-95 disabled:opacity-50 sm:h-32 sm:w-32"
               >
                 {drawing ? (
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -200,13 +201,13 @@ export default function LotteryPage() {
                   </>
                 )}
               </button>
-              <p className="mt-2 text-xs text-muted-foreground">剩余 {draws} 次</p>
+              <p className="mt-2 text-xs text-gray-500">剩余 {draws} 次</p>
             </div>
           </div>
 
           {drawMsg && <p className="mt-4 text-center text-sm text-destructive">{drawMsg}</p>}
           {lastResult && !drawMsg && (
-            <div className="mt-4 rounded-xl bg-primary/10 px-4 py-3 text-center text-sm text-primary">
+            <div className="mt-4 rounded-md bg-primary/10 px-4 py-3 text-center text-sm text-primary">
               恭喜！抽中 <span className="font-bold">{resultLabel(lastResult.resultType)}</span>
               {lastResult.resultType === "egg" && `（${lastResult.points} 积分）`}
             </div>
@@ -219,41 +220,41 @@ export default function LotteryPage() {
             <Coins className="h-5 w-5 text-primary" /> 积分兑换
           </h2>
           {redeemResult ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-5">
               <p className="text-sm font-medium text-emerald-800">兑换成功：{redeemResult.productName}</p>
               <div className="mt-3 flex items-center gap-2">
-                <code className="flex-1 break-all rounded-xl bg-white px-3 py-2.5 font-mono text-sm text-foreground shadow-none">
+                <code className="flex-1 break-all rounded-md border border-gray-200 bg-white px-3 py-2.5 font-mono text-sm text-gray-900">
                   {redeemResult.code}
                 </code>
-                <Button size="icon" className="h-11 w-11 rounded-xl" onClick={copyCode}>
+                <Button size="icon" className="h-11 w-11 shrink-0 rounded-md" onClick={copyCode}>
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
               <button
                 type="button"
-                className="mt-3 text-xs text-muted-foreground underline-offset-2 hover:underline"
+                className="mt-3 text-xs text-gray-500 underline-offset-2 hover:underline"
                 onClick={() => setRedeemResult(null)}
               >
                 继续兑换
               </button>
             </div>
           ) : redeemables.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            <div className="rounded-md border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
               暂无可兑换的卡密，敬请期待上架～
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {redeemables.map((r) => (
-                <div key={r.id} className="rounded-2xl border border-border bg-card p-4 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{r.name}</span>
-                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                <div key={r.id} className="rounded-md border border-gray-200 bg-white p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate font-medium text-gray-900">{r.name}</span>
+                    <span className="shrink-0 rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                       {r.redeemCost} 积分
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">库存 {r.stock}</p>
+                  <p className="mt-1 text-xs text-gray-500">库存 {r.stock}</p>
                   <Button
-                    className="mt-3 h-10 w-full rounded-xl bg-primary text-sm text-primary-foreground hover:opacity-90"
+                    className="mt-3 h-10 w-full rounded-md bg-primary text-sm text-primary-foreground hover:opacity-90"
                     disabled={redeemingId === r.id || points < r.redeemCost}
                     onClick={() => handleRedeem(r.id)}
                   >
@@ -272,12 +273,12 @@ export default function LotteryPage() {
             <History className="h-5 w-5 text-primary" /> 抽奖记录
           </h2>
           {history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">还没有抽奖记录，快去抽一次吧～</p>
+            <p className="text-sm text-gray-500">还没有抽奖记录，快去抽一次吧～</p>
           ) : (
             <div className="space-y-2">
               {history.map((h) => (
-                <div key={h.id} className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm">
-                  <span className="text-muted-foreground">
+                <div key={h.id} className="flex flex-col gap-1 rounded-md border border-gray-200 bg-white px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-xs text-gray-500 sm:text-sm">
                     {new Date(h.createdAt).toLocaleString("zh-CN", { hour12: false })}
                   </span>
                   <span className="font-medium text-primary">
@@ -290,7 +291,7 @@ export default function LotteryPage() {
         </div>
 
         <div className="mt-8 flex justify-center">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary">
             返回商城 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
