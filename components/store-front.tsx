@@ -99,10 +99,10 @@ const ProductCard = memo(function ProductCard({
       </div>
       <div className="flex flex-1 flex-col p-3">
         <p className="truncate text-[14px] font-medium text-gray-900">{product.name}</p>
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between gap-1.5">
           {/* 价格：独角数卡 Unicorn 用「绿色描边按钮」呈现，而非红字 */}
-          <span className="inline-flex items-center rounded border border-emerald-500 px-2 py-1 text-[13px] font-semibold text-emerald-600 [font-variant-numeric:tabular-nums]">
-            <span className="mr-0.5 text-[11px]">¥</span>
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded border border-emerald-500 px-1.5 py-1 text-[12px] font-semibold text-emerald-600 [font-variant-numeric:tabular-nums] sm:px-2 sm:text-[13px]">
+            <span className="mr-0.5 text-[10px] sm:text-[11px]">¥</span>
             {Number(product.price).toFixed(2)}
           </span>
           <button
@@ -110,7 +110,7 @@ const ProductCard = memo(function ProductCard({
             disabled={soldOut}
             onClick={() => onBuy(product)}
             className={cn(
-              "rounded bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground transition-opacity duration-150",
+              "shrink-0 whitespace-nowrap rounded bg-primary px-2.5 py-1.5 text-[12px] font-medium text-primary-foreground transition-opacity duration-150 sm:px-3 sm:text-[13px]",
               soldOut ? "cursor-not-allowed bg-gray-300" : "hover:opacity-90"
             )}
           >
