@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import React from "react"
 
 interface Order {
@@ -159,6 +160,8 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
   const [proof, setProof] = useState("")
   const [proofStatus, setProofStatus] = useState<"idle" | "submitting" | "submitted">("idle")
   const [proofMessage, setProofMessage] = useState("")
+  const [showDrawsPrompt, setShowDrawsPrompt] = useState(false)
+  const [drawsCopied, setDrawsCopied] = useState(false)
 
   const fetchOrder = async () => {
     try {
@@ -271,6 +274,29 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
       setProofMessage("网络错误")
       setProofStatus("idle")
     }
+  }
+
+  // 卡密购买成功后弹窗：提示把订单号发给皮蛋手动加抽奖次数（每个订单只弹一次）
+  useEffect(() => {
+    if (order?.status === "PAID") {
+      try {
+        if (!localStorage.getItem(`draws_prompt_${order.orderNo}`)) setShowDrawsPrompt(true)
+      } catch {}
+    }
+  }, [order?.status, order?.orderNo])
+
+  const dismissDrawsPrompt = () => {
+    if (order?.orderNo) {
+      try { localStorage.setItem(`draws_prompt_${order.orderNo}`, "1") } catch {}
+    }
+    setShowDrawsPrompt(false)
+  }
+
+  const copyOrderNo = () => {
+    if (!order?.orderNo) return
+    navigator.clipboard.writeText(order.orderNo)
+    setDrawsCopied(true)
+    setTimeout(() => setDrawsCopied(false), 2000)
   }
 
   if (loading) {
@@ -426,6 +452,33 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
           </div>
         )}
       </div>
+
+      <Dialog open={showDrawsPrompt} onOpenChange={(o) => { if (!o) dismissDrawsPrompt() }}>
+        <DialogContent className="border border-gray-200 bg-white text-gray-900 sm:max-w-md sm:rounded-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">购买成功 · 领抽奖次数</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-gray-700">
+            <p>
+              加抽奖次数请把下方<strong>订单号</strong>发给皮蛋（TG：
+              <span className="font-medium text-primary">@PdanKing</span>），由皮蛋手动为你添加。
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 break-all rounded-md border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-900">
+                {order.orderNo}
+              </code>
+              <Button size="icon" variant="secondary" className="h-9 w-9 shrink-0 rounded-md" onClick={copyOrderNo}>
+                {drawsCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500">抽奖次数仅由管理员手动添加，系统不会自动发放。</p>
+          </div>
+          <Button className="mt-2 h-10 w-full rounded-md" onClick={dismissDrawsPrompt}>
+            我知道了
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       <StoreFooter />
     </div>
   );

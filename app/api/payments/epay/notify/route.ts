@@ -5,7 +5,6 @@ import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ensureLotterySchema } from "@/lib/db-migrate";
-import { grantLotteryDraws } from "@/lib/lottery";
 
 // 全局(数据库级)限流：每个 IP 5 分钟内最多 60 次回调（宽松，避免误伤支付网关重试）
 
@@ -122,22 +121,10 @@ async function processNotification(data: any, req?: Request) {
           data: { 
             status: "PAID",
             paymentMethod: "epay",
-            paidAt: new Date(),
-            drawsGranted: true
+            paidAt: new Date()
           }
         });
 
-        // 发放抽奖次数（按订单幂等：drawsGranted 已置 true）
-        const granted = await grantLotteryDraws(tx, {
-          id: order.id,
-          customerId: order.customerId,
-          drawsGranted: order.drawsGranted,
-          quantity: order.quantity,
-          product: order.product,
-        });
-        if (granted > 0) {
-          log.info({ orderNo: order.orderNo, granted }, "Lottery draws granted");
-        }
         log.info("Order successfully fulfilled");
       });
 

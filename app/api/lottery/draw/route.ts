@@ -31,20 +31,21 @@ export async function POST(req: Request) {
   try {
     const cfg = await getLotteryConfig();
     const result = await prisma.$transaction(async (tx) => {
-      const customer = await tx.customer.findUnique({ where: { id: customerId } });
-      if (!customer) throw new Error("customer not found");
-      if (customer.drawsAvailable <= 0) {
+      // 原子扣减抽奖次数：只有 drawsAvailable > 0 才扣得动。
+      // 旧的「先 findUnique 判断再 decrement」不是原子操作，并发点两次会把次数扣成 -1 却领两次奖励。
+      const deducted = await tx.customer.updateMany({
+        where: { id: customerId, drawsAvailable: { gt: 0 } },
+        data: { drawsAvailable: { decrement: 1 } },
+      });
+      if (deducted.count === 0) {
         return { noDraws: true };
       }
 
-      // 原子扣减抽奖次数
-      const updated = await tx.customer.update({
-        where: { id: customerId },
-        data: { drawsAvailable: { decrement: 1 } },
-      });
+      const current = await tx.customer.findUnique({ where: { id: customerId } });
+      if (!current) throw new Error("customer not found");
 
       const draw = rollLottery(cfg);
-      const newPoints = updated.points + draw.points;
+      const newPoints = current.points + draw.points;
 
       // 原子增加积分
       await tx.customer.update({
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
         resultType: draw.resultType,
         points: draw.points,
         pointsBalance: newPoints,
-        drawsAvailable: updated.drawsAvailable,
+        drawsAvailable: current.drawsAvailable,
       };
     });
 

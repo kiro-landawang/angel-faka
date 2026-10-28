@@ -146,6 +146,7 @@ export function StoreFront({
   const [couponError, setCouponError] = useState("")
   const [paymentError, setPaymentError] = useState("")
   const [account, setAccount] = useState<{ email: string } | null>(null)
+  const [guestEmail, setGuestEmail] = useState("")
 
   const allProducts = useMemo(
     () => categories.flatMap((c) => c.products),
@@ -230,11 +231,9 @@ export function StoreFront({
 
   const handlePurchase = async () => {
     if (!selectedProduct) return
-    // 抽奖 / 积分体系：必须先登录才能下单
-    if (!account) {
-      if (confirm("下单需要先登录账户（用于发放抽奖次数与积分）。是否前往登录？")) {
-        window.location.href = "/login"
-      }
+    // 游客也可下单：未登录时必须提供收货邮箱
+    if (!account && (!guestEmail.trim() || !guestEmail.includes("@"))) {
+      setPaymentError("请填写正确的收货邮箱")
       return
     }
     if (!paymentMethod) {
@@ -255,6 +254,7 @@ export function StoreFront({
           quantity,
           paymentMethod: selected?.provider || "dummy",
           couponCode: appliedCoupon?.code,
+          email: account ? undefined : guestEmail.trim(),
           options: { channel: paymentMethod },
         }),
       })
@@ -373,11 +373,19 @@ export function StoreFront({
                   <p className="mt-0.5 text-[15px] font-medium text-gray-900 break-all">{account.email}</p>
                 </div>
               ) : (
-                <div className="rounded-md border border-primary/30 bg-primary/5 px-4 py-3">
-                  <p className="text-sm text-gray-900">
-                    需要先 <a href="/login" className="font-semibold text-primary underline-offset-2 hover:underline">登录账户</a> 才能购买
+                <div className="space-y-1.5">
+                  <Label htmlFor="guest-email" className="text-xs text-gray-500">收货邮箱</Label>
+                  <Input
+                    id="guest-email"
+                    type="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    placeholder="填真实邮箱，用于接收卡密"
+                    className="h-11 rounded-md border-gray-200 bg-gray-50 text-gray-900 shadow-none placeholder:text-gray-400"
+                  />
+                  <p className="text-[11px] text-gray-400">
+                    游客可直接购买；想参与抽奖请先 <a href="/login" className="text-primary hover:underline">注册账户</a>
                   </p>
-                  <p className="mt-1 text-xs text-gray-500">登录后购买卡密即送抽奖次数，可抽积分再兑换卡密</p>
                 </div>
               )}
             </div>

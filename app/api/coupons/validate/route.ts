@@ -1,11 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+function getClientIP(req: Request): string {
+  const xf = req.headers.get("x-forwarded-for");
+  if (xf) return xf.split(",")[0].trim();
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
+  return "unknown";
+}
 
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIP(req);
+    // 防优惠券爆破：每 IP 5 分钟内最多 20 次校验
+    if (!(await checkRateLimit("coupon_validate:ip:" + clientIp, 20, 5 * 60)).allowed) {
+      return NextResponse.json({ error: "操作过于频繁，请稍后再试" }, { status: 429 });
+    }
+
     const { code, productId } = await req.json();
 
-    if (!code) return NextResponse.json({ error: "Missing code" }, { status: 400 });
+    if (!code || typeof code !== "string" || !code.trim()) {
+      return NextResponse.json({ error: "Missing code" }, { status: 400 });
+    }
+    if (!productId || typeof productId !== "string") {
+      return NextResponse.json({ error: "Missing productId" }, { status: 400 });
+    }
 
     const coupon = await prisma.coupon.findUnique({
       where: { code: code.trim().toUpperCase() }
@@ -15,7 +35,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "无效的优惠码" }, { status: 404 });
     }
 
-    const product = await prisma.product.findUnique({ where: { id: productId }, select: { merchantId: true } });
+    const product = await prisma.product.findUnique({ where: { id: productId }, select: { merchantId: true, categoryId: true } });
     if (!product || coupon.merchantId !== product.merchantId) {
       return NextResponse.json({ error: "无效的优惠码" }, { status: 404 });
     }
@@ -36,17 +56,11 @@ export async function POST(req: Request) {
     }
 
     // Check if coupon is bound to a specific category
-    if (coupon.categoryId) {
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        select: { categoryId: true }
-      });
-      if (product?.categoryId !== coupon.categoryId) {
-        return NextResponse.json({ error: "该优惠码不适用于此分类下的商品" }, { status: 400 });
-      }
+    if (coupon.categoryId && product.categoryId !== coupon.categoryId) {
+      return NextResponse.json({ error: "该优惠码不适用于此分类下的商品" }, { status: 400 });
     }
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       id: coupon.id,
       code: coupon.code,
       discountType: coupon.discountType,

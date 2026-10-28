@@ -40,25 +40,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "操作过于频繁，请稍后再试" }, { status: 429 });
     }
 
-    // 抽奖 / 积分体系：下单必须登录（账户用于累计抽奖次数与积分）
+    // 下单不强制登录：未登录按「游客」下单（customerId = null），只需提供收货邮箱；
+    // 登录用户仍强制使用账户邮箱（防止绕过账户体系）。
     await ensureLotterySchema();
     const customerId = await getCustomerId();
-    if (!customerId) {
-      return NextResponse.json({ error: "请先登录后再下单" }, { status: 401 });
+    let resolvedCustomerId: string | null = null;
+    let orderEmail = "";
+
+    if (customerId) {
+      const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+      if (!customer) {
+        return NextResponse.json({ error: "账户不存在，请重新登录" }, { status: 401 });
+      }
+      resolvedCustomerId = customer.id;
+      orderEmail = customer.email;
+    } else {
+      const guestEmail = typeof body.email === "string" ? body.email.trim() : "";
+      if (!guestEmail || !guestEmail.includes("@") || guestEmail.length > 200) {
+        return NextResponse.json({ error: "请填写正确的收货邮箱" }, { status: 400 });
+      }
+      orderEmail = guestEmail;
     }
-    const customer = await prisma.customer.findUnique({ where: { id: customerId } });
-    if (!customer) {
-      return NextResponse.json({ error: "账户不存在，请重新登录" }, { status: 401 });
-    }
-    // 订单邮箱以登录账户为准（防止绕过）
-    const orderEmail = customer.email;
 
     if (!productId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     if (typeof orderEmail !== "string" || !orderEmail.includes("@")) {
-      return NextResponse.json({ error: "账户邮箱格式不正确" }, { status: 400 });
+      return NextResponse.json({ error: "邮箱格式不正确" }, { status: 400 });
     }
 
     const emailDomain = orderEmail.split("@")[1].toLowerCase();
@@ -205,7 +214,7 @@ export async function POST(req: Request) {
         data: {
           orderNo,
           email: orderEmail,
-          customerId,
+          customerId: resolvedCustomerId,
           productId,
           merchantId: product.merchantId,
           sourceMerchantId,
