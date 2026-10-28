@@ -117,9 +117,6 @@ const ProductCard = memo(function ProductCard({
             {soldOut ? "已售罄" : "立即购买"}
           </button>
         </div>
-        <p className="mt-2 text-[12px] text-gray-400">
-          库存：{product.stock > 0 ? product.stock : "暂时缺货"}
-        </p>
       </div>
     </div>
   )

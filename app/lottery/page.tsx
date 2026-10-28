@@ -252,7 +252,6 @@ export default function LotteryPage() {
                       {r.redeemCost} 积分
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">库存 {r.stock}</p>
                   <Button
                     className="mt-3 h-10 w-full rounded-md bg-primary text-sm text-primary-foreground hover:opacity-90"
                     disabled={redeemingId === r.id || points < r.redeemCost}
