@@ -177,14 +177,11 @@ const ProductRow = memo(function ProductRow({
       </TableCell>
       <TableCell>
         <div className="flex flex-col gap-1">
-          <span className={cn(
-            "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border",
-            product.lotteryDraws > 0
-              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-              : "bg-muted text-muted-foreground border-border/50"
-          )}>
-            {product.lotteryDraws > 0 ? `赠 ${product.lotteryDraws} 抽/笔` : "不赠送"}
-          </span>
+          {product.lotteryDraws > 0 && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-muted text-muted-foreground border-border/50 line-through">
+              {`旧字段 ${product.lotteryDraws} 抽/笔（已停用）`}
+            </span>
+          )}
           {product.isRedeemable && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-primary/10 text-primary border-primary/20">
               {`兑 ${product.redeemCost ?? "?"} 分`}
@@ -787,10 +784,11 @@ export default function ProductsPage() {
                 {/* 抽奖 / 积分 */}
                 <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
                   <p className="text-xs font-medium text-primary">抽奖 / 积分</p>
-                  <div className="grid gap-1">
-                    <Label className="text-xs">每笔赠送抽奖次数</Label>
-                    <Input type="number" min="0" step="1" value={formData.lotteryDraws} onChange={(e) => setFormData({ ...formData, lotteryDraws: e.target.value })} placeholder="0" />
-                    <p className="text-[10px] text-muted-foreground">顾客购买后获得的抽奖次数（×数量）。天卡建议填 1，周卡建议填 3。</p>
+                  <div className="rounded border border-dashed border-border/60 bg-muted/30 p-2">
+                    <p className="text-[11px] font-medium text-foreground">抽奖次数：仅管理员手动发放</p>
+                    <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
+                      付款成功<strong>不会</strong>自动送抽奖次数。顾客下单后把订单号发给你，你去「用户管理」给对应账户加次数即可。此处的历史「赠送次数」字段已停用。
+                    </p>
                   </div>
                   <label className="flex items-center gap-2 text-sm">
                     <input
