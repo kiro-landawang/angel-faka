@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { customerLogin } from "@/lib/customer-auth";
 import { ensureLotterySchema } from "@/lib/db-migrate";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { captchaErrorMessage, verifyCaptcha } from "@/lib/captcha";
 import { logger } from "@/lib/logger";
 
 const log = logger.child({ module: "CustomerLogin" });
@@ -22,7 +23,18 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { email, password } = await req.json();
+    const { email, password, captchaToken, captchaAnswer } = await req.json();
+
+    // 人机验证：必须在验密码之前拦下，否则爆破者拿不到验证码也照样能猜密码
+    const captcha = await verifyCaptcha(captchaToken, captchaAnswer);
+    if (!captcha.ok) {
+      log.warn({ clientIp, reason: captcha.reason }, "Customer login captcha failed");
+      return NextResponse.json(
+        { error: captchaErrorMessage(captcha.reason), code: "CAPTCHA_FAILED" },
+        { status: 400 }
+      );
+    }
+
     if (!email || !password) {
       return NextResponse.json({ error: "请输入邮箱和密码" }, { status: 400 });
     }

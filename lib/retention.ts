@@ -34,6 +34,15 @@ export async function purgeExpiredRecords(now = new Date()) {
     },
   });
 
-  logger.info({ deletedOrders: expiredOrders.length }, "Retention purge completed");
-  return { deletedOrders: expiredOrders.length, cutoff };
+  // 限流/验证码一次性标记桶：过期即无用，长期不清理会让 RateLimit 表无限膨胀
+  // （图验每次校验都会写一条 captcha_use:<jti>）
+  const purgedRateLimits = await prisma.rateLimit.deleteMany({
+    where: { expiresAt: { lt: now } },
+  });
+
+  logger.info(
+    { deletedOrders: expiredOrders.length, purgedRateLimits: purgedRateLimits.count },
+    "Retention purge completed"
+  );
+  return { deletedOrders: expiredOrders.length, purgedRateLimits: purgedRateLimits.count, cutoff };
 }

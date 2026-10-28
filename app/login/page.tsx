@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Navbar } from "@/components/navbar"
 import { StoreFooter } from "@/components/store-footer"
+import { CaptchaField, type CaptchaValue } from "@/components/captcha-field"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,6 +19,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [mode, setMode] = useState<"login" | "register">("login")
+  const [captcha, setCaptcha] = useState<CaptchaValue>({ token: "", answer: "" })
+  const [captchaReset, setCaptchaReset] = useState(0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,13 +33,27 @@ export default function LoginPage() {
       setError("密码至少 6 位")
       return
     }
+    if (!captcha.answer.trim()) {
+      setError("请输入验证码")
+      return
+    }
+    if (!captcha.token) {
+      setError("验证码加载失败，请点击图片刷新后重试")
+      setCaptchaReset((n) => n + 1)
+      return
+    }
     setLoading(true)
     try {
       const url = mode === "login" ? "/api/customer/login" : "/api/customer/register"
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          captchaToken: captcha.token,
+          captchaAnswer: captcha.answer.trim(),
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
@@ -44,9 +61,12 @@ export default function LoginPage() {
         router.refresh()
       } else {
         setError(data.error || (mode === "login" ? "登录失败" : "注册失败"))
+        // 验证码是一次性的（无论对错都已作废），失败后必须换一张
+        setCaptchaReset((n) => n + 1)
       }
     } catch {
       setError("网络错误，请稍后重试")
+      setCaptchaReset((n) => n + 1)
     } finally {
       setLoading(false)
     }
@@ -67,7 +87,7 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_16px_48px_rgba(15,23,42,0.10)]">
-          <Tabs value={mode} onValueChange={(v) => { setMode(v as any); setError("") }}>
+          <Tabs value={mode} onValueChange={(v) => { setMode(v as any); setError(""); setCaptchaReset((n) => n + 1) }}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">登录</TabsTrigger>
               <TabsTrigger value="register">注册</TabsTrigger>
@@ -102,6 +122,8 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
+
+              <CaptchaField onChange={setCaptcha} resetSignal={captchaReset} disabled={loading} />
 
               {error && <p className="text-sm text-destructive">{error}</p>}
 
