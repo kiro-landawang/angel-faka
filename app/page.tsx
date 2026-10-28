@@ -61,19 +61,9 @@ export default async function Home() {
   }));
 
   return (
-    <main className="theme-dark relative flex min-h-screen flex-col overflow-x-clip bg-[#0A0A0C] text-foreground">
-      {/* 暗色底直接落在 main 上（不能用 -z-10 的 fixed 层：会被 body 的亮色背景压住），
-          三团氛围光是静态 radial-gradient，只画一次，无滤镜无动画 */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(45% 42% at 10% 2%, rgba(226,114,91,0.16), transparent 62%), radial-gradient(40% 38% at 92% 14%, rgba(120,80,220,0.13), transparent 62%), radial-gradient(50% 46% at 60% 100%, rgba(226,114,91,0.07), transparent 62%)",
-        }}
-        aria-hidden
-      />
+    <main className="relative flex min-h-screen flex-col overflow-x-clip bg-background text-foreground">
       <Navbar />
-      <div className="relative z-10 mx-auto w-full max-w-7xl flex-1 px-5 sm:px-8 lg:px-10">
+      <div className="relative mx-auto w-full max-w-7xl flex-1 px-5 sm:px-8 lg:px-10">
         <Announcement content={announcement?.value || undefined} />
         <StoreFront categories={categories} featured />
       </div>

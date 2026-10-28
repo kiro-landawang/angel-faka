@@ -13,10 +13,10 @@ export function Navbar() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90">
-      <div className="mx-auto flex h-[62px] max-w-7xl items-center gap-8 px-5 sm:px-8 lg:px-10">
-        <Link href="/" className="flex items-center gap-2.5 text-[16px] font-bold tracking-tight text-foreground">
-          <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-[13px] font-extrabold text-white">
+    <header className="sticky top-0 z-50 w-full px-4 pt-3 sm:px-6">
+      <div className="mx-auto flex h-[54px] max-w-7xl items-center gap-6 rounded-2xl border border-border/70 bg-card/95 px-4 shadow-[0_2px_16px_rgba(15,23,42,0.06)] sm:px-5">
+        <Link href="/" className="flex items-center gap-2.5 text-[15.5px] font-bold tracking-tight text-foreground">
+          <span className="flex h-[26px] w-[26px] items-center justify-center rounded-lg bg-primary text-[13px] font-extrabold text-primary-foreground">
             A
           </span>
           <span className="hidden sm:inline">ANGEL 旗舰</span>
@@ -27,8 +27,8 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               className={cn(
-                "whitespace-nowrap rounded-lg px-3.5 py-1.5 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground",
-                pathname === link.href && "font-medium text-foreground"
+                "whitespace-nowrap rounded-lg px-3.5 py-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                pathname === link.href && "bg-secondary font-medium text-primary"
               )}
             >
               {link.label}
@@ -39,7 +39,7 @@ export function Navbar() {
             href="https://gobang-6e6.pages.dev/"
             target="_blank"
             rel="noopener noreferrer"
-            className="clip-ark-sm ml-1 inline-flex items-center gap-1 whitespace-nowrap bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-3.5 py-1.5 text-[13px] font-bold tracking-[0.04em] text-white shadow-[0_8px_26px_rgba(226,114,91,0.32)] transition-transform hover:scale-[1.03]"
+            className="ml-1 inline-flex items-center whitespace-nowrap rounded-lg bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             五子棋入口
           </a>
@@ -47,7 +47,7 @@ export function Navbar() {
             href="https://iacg.love/"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-1 hidden items-center whitespace-nowrap rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/20 sm:inline-flex"
+            className="ml-1 hidden items-center whitespace-nowrap rounded-lg border border-border px-3.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary sm:inline-flex"
           >
             神秘福利
           </a>
@@ -55,7 +55,7 @@ export function Navbar() {
             href="https://yehang.web.zaka.live/home.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-1 hidden items-center whitespace-nowrap rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/20 sm:inline-flex"
+            className="ml-1 hidden items-center whitespace-nowrap rounded-lg border border-border px-3.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary sm:inline-flex"
           >
             神秘福利2
           </a>

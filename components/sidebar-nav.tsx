@@ -67,7 +67,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
     <aside
       className={cn(
         // 暗玻璃：细描边 + 半透明底，无 backdrop-blur（背后是纯色底，模糊无视觉收益）
-        "w-full rounded-[18px] border border-white/[0.06] bg-white/[0.03] p-4",
+        "w-full rounded-[18px] border border-border bg-card p-4",
         "transition-[width] duration-300 md:shrink-0",
         collapsed ? "md:w-24" : "md:w-60",
         "max-md:rounded-2xl"
@@ -76,7 +76,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
       <div className="mb-3 flex items-center gap-2 px-1">
         <span
           className={cn(
-            "text-[11.5px] font-bold uppercase tracking-[0.14em] text-zinc-500 transition-opacity",
+            "text-[11.5px] font-bold uppercase tracking-[0.14em] text-muted-foreground transition-opacity",
             collapsed && "pointer-events-none opacity-0"
           )}
         >
@@ -86,7 +86,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           aria-label="折叠 / 展开"
-          className="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[14px] text-zinc-400 transition-colors hover:border-white/20 hover:text-primary md:flex"
+          className="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted/60 text-[14px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary md:flex"
         >
           {collapsed ? "»" : "«"}
         </button>
@@ -109,11 +109,11 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
                 type="button"
                 onClick={() => onSelect(cat.id)}
                 className={cn(
-                  "nav-item flex shrink-0 items-center gap-2.5 rounded-xl border px-4 py-2.5 text-[14.5px] font-semibold text-zinc-400",
+                  "nav-item flex shrink-0 items-center gap-2.5 rounded-xl border px-4 py-2.5 text-[14.5px] font-semibold text-muted-foreground",
                   collapsed ? "md:h-[52px] md:w-[52px] md:justify-center md:gap-0 md:px-0" : "",
                   active
                     ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-white/[0.07] bg-white/[0.04] hover:border-white/20 hover:text-zinc-100"
+                    : "border-border bg-muted/60 hover:border-primary/40 hover:text-foreground"
                 )}
               >
                 {cat.emoji && (
@@ -131,7 +131,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
             type="button"
             onClick={scrollRight}
             aria-label="查看更多分类"
-            className="absolute right-0 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#1A1A1E] text-[13px] text-zinc-300 shadow-[0_4px_14px_rgba(0,0,0,0.5)] transition-colors hover:border-white/25 hover:text-white md:hidden"
+            className="absolute right-0 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-[13px] text-foreground shadow-[0_4px_14px_rgba(15,23,42,0.12)] transition-colors hover:border-primary/50 hover:text-primary md:hidden"
           >
             ›
           </button>
@@ -140,7 +140,7 @@ export function SidebarNav({ categories, activeId, onSelect }: SidebarNavProps) 
 
       <p
         className={cn(
-          "mt-3 text-center text-[11.5px] text-zinc-600 transition-opacity max-md:hidden",
+          "mt-3 text-center text-[11.5px] text-muted-foreground transition-opacity max-md:hidden",
           collapsed && "pointer-events-none opacity-0"
         )}
       >

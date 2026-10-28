@@ -12,7 +12,7 @@ export default async function HelpCenterPage() {
   });
 
   return (
-    <main className="theme-dark flex min-h-screen flex-col bg-background text-foreground">
+    <main className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
       <div className="mx-auto w-full max-w-3xl flex-1 px-5 py-12">
         <h1 className="text-4xl font-medium tracking-tight">帮助中心</h1>
@@ -27,7 +27,7 @@ export default async function HelpCenterPage() {
               <Link
                 key={article.slug}
                 href={`/pages/${article.slug}`}
-                className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:bg-white/[0.04]"
+                className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:bg-muted/60"
               >
                 <div>
                   <p className="text-[15px] font-medium">{article.title}</p>

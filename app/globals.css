@@ -4,25 +4,26 @@
 
 @layer base {
   :root {
-    --background: 345 80% 98%;
-    --foreground: 338 24% 13%;
+    /* 独角数卡 Next classic 风浅色系：白卡 + 浅灰底 + 蓝主色 */
+    --background: 220 20% 98%;
+    --foreground: 222 25% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 338 24% 13%;
+    --card-foreground: 222 25% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 338 24% 13%;
-    --primary: 340 72% 56%;
+    --popover-foreground: 222 25% 12%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 340 82% 95%;
-    --secondary-foreground: 338 24% 13%;
-    --muted: 340 82% 95%;
-    --muted-foreground: 340 32% 50%;
-    --accent: 340 82% 95%;
-    --accent-foreground: 338 24% 13%;
-    --destructive: 350 75% 48%;
+    --secondary: 214 60% 95%;
+    --secondary-foreground: 222 25% 12%;
+    --muted: 214 32% 95%;
+    --muted-foreground: 220 12% 46%;
+    --accent: 214 60% 95%;
+    --accent-foreground: 222 25% 12%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 340 72% 89%;
-    --input: 340 72% 89%;
-    --ring: 340 72% 56%;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 221 83% 53%;
     --radius: 1rem;
   }
 

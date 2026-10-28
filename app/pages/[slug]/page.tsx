@@ -34,7 +34,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   }
 
   return (
-    <main className="theme-dark flex min-h-screen flex-col bg-background text-foreground">
+    <main className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
       <div className="mx-auto w-full max-w-3xl flex-1 px-5 py-12">
         <Link href="/pages" className="text-sm text-muted-foreground hover:text-foreground">返回帮助</Link>

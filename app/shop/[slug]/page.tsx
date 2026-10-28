@@ -47,7 +47,7 @@ export default async function MerchantShopPage({ params }: { params: { slug: str
   }));
 
   return (
-    <main className="theme-dark flex min-h-screen flex-col bg-background text-foreground">
+    <main className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
       <div className="mx-auto w-full max-w-3xl px-5 pt-8">
         <p className="text-xs text-muted-foreground">独立店铺</p>

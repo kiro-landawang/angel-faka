@@ -63,7 +63,7 @@ export function Announcement({ content }: AnnouncementProps) {
 
       {content && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="dialog-dark max-h-[85vh] overflow-hidden border border-border bg-card p-0 text-card-foreground sm:max-w-xl sm:rounded-[18px]">
+          <DialogContent className="max-h-[85vh] overflow-hidden border border-border bg-card p-0 text-card-foreground sm:max-w-xl sm:rounded-[18px]">
             <DialogHeader className="px-6 pt-6">
               <DialogTitle className="text-lg font-semibold tracking-tight">网站服务公告</DialogTitle>
             </DialogHeader>
@@ -74,7 +74,7 @@ export function Announcement({ content }: AnnouncementProps) {
             </div>
             <div className="px-6 pb-6">
               <Button
-                className="h-11 w-full rounded-xl bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-white transition-opacity hover:opacity-90"
+                className="h-11 w-full rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90"
                 onClick={() => setOpen(false)}
               >
                 我已阅读

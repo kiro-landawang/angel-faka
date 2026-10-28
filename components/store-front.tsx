@@ -17,11 +17,11 @@ const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
 // ---- visual helpers (deterministic, no external image assets needed) ----
 const PRODUCT_EMOJIS = ["🎮", "🎬", "🎵", "💻", "📺", "🎁", "⚡", "🌟", "💎", "🎯", "🚀", "🔥"]
-// 三种静态光斑色（radial-gradient 只画一次，无滤镜无动画），按商品 ID 稳定分配
+// 浅色柔光（radial-gradient 只画一次，无滤镜无动画），按商品 ID 稳定分配
 const PRODUCT_GLOWS = [
-  "radial-gradient(circle at 30% 22%, rgba(226,114,91,0.34), transparent 66%)",   // 陶土
-  "radial-gradient(circle at 70% 24%, rgba(120,80,220,0.32), transparent 66%)",   // 紫
-  "radial-gradient(circle at 50% 30%, rgba(64,150,255,0.28), transparent 66%)",   // 蓝
+  "radial-gradient(circle at 30% 22%, rgba(59,130,246,0.14), transparent 66%)",   // 蓝
+  "radial-gradient(circle at 70% 24%, rgba(139,92,246,0.12), transparent 66%)",   // 紫
+  "radial-gradient(circle at 50% 30%, rgba(16,185,129,0.12), transparent 66%)",   // 绿
 ]
 function hashStr(s: string) {
   let h = 0
@@ -51,14 +51,17 @@ function categoryEmoji(name: string) {
   return "🌸"
 }
 
-// 库存概况分级（语义色）：售空=灰、少量=琥珀、有货=绿
+// 独角式徽章系统：库存分级 + 交付方式（语义色浅色胶囊）
 function stockTier(stock: number) {
   if (stock <= 0)
-    return { label: "售空", badge: "border border-white/10 bg-white/[0.06] text-zinc-400", sub: "补货中 · 可订阅提醒" }
+    return { label: "售空", badge: "border border-zinc-200 bg-zinc-100 text-muted-foreground", sub: "补货中 · 可订阅提醒" }
   if (stock < 10)
-    return { label: "少量", badge: "border border-amber-400/30 bg-amber-400/10 text-amber-300", sub: "库存紧张 · 自动发货" }
-  return { label: "有货", badge: "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300", sub: "库存充足 · 自动发货" }
+    return { label: "有库存", badge: "border border-amber-200 bg-amber-50 text-amber-600", sub: "库存紧张 · 自动发货" }
+  return { label: "有库存", badge: "border border-emerald-200 bg-emerald-50 text-emerald-600", sub: "库存充足 · 自动发货" }
 }
+
+// 徽章胶囊统一样式（独角 classic 风小圆胶囊）
+const CHIP = "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium"
 
 interface Product {
   id: string
@@ -102,17 +105,17 @@ const ProductCard = memo(function ProductCard({
       disabled={soldOut}
       onClick={() => onBuy(product)}
       className={cn(
-        // 暗玻璃卡：静态零阴影，hover 才浮起；阴影用伪元素预烘焙切 opacity，
+        // 独角式白卡：静态零阴影，hover 才浮起；阴影用伪元素预烘焙切 opacity，
         // 全程只动 transform + opacity（合成器线程），不触发 box-shadow 过渡重绘
-        "group relative flex flex-col overflow-hidden rounded-[18px] border border-white/[0.08] bg-card text-left",
+        "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-left",
         "transition-[transform,border-color] duration-200 ease-out",
-        "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[0_18px_48px_rgba(0,0,0,0.55)] before:opacity-0 before:transition-opacity before:duration-200",
-        "hover:-translate-y-1 hover:border-white/20 hover:before:opacity-100",
-        soldOut && "opacity-55"
+        "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[0_14px_36px_rgba(15,23,42,0.10)] before:opacity-0 before:transition-opacity before:duration-200",
+        "hover:-translate-y-1 hover:border-primary/30 hover:before:opacity-100",
+        soldOut && "opacity-60"
       )}
     >
-      <div className="relative h-40 sm:h-44">
-        {/* 专属色光斑：按商品 ID 稳定分配陶土/紫/蓝 */}
+      <div className="relative h-36 sm:h-40">
+        {/* 专属色柔光：按商品 ID 稳定分配蓝/紫/绿 */}
         <div className="absolute inset-0" style={{ background: v.glow }} aria-hidden />
         {product.image && !imageFailed ? (
           <img
@@ -124,49 +127,38 @@ const ProductCard = memo(function ProductCard({
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
-          <span
-            className="absolute inset-0 flex items-center justify-center text-5xl"
-            style={{ filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.5))" }}
-            aria-hidden
-          >
+          <span className="absolute inset-0 flex items-center justify-center text-5xl" aria-hidden>
             {v.emoji}
           </span>
         )}
-        <div className="absolute left-3 top-3 flex items-center gap-1.5">
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
           {categoryName && (
-            <span className="clip-ark-sm bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-2.5 py-0.5 text-[10px] font-bold tracking-[0.08em] text-white">
-              {categoryName}
-            </span>
+            <span className={cn(CHIP, "border-blue-200 bg-blue-50 text-blue-600")}>{categoryName}</span>
           )}
-          <span
-            className={cn(
-              "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-              tier.badge
-            )}
-          >
-            {tier.label}
-          </span>
+          <span className={cn(CHIP, tier.badge)}>{tier.label}</span>
         </div>
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <p className="truncate text-[15.5px] font-semibold tracking-[-0.015em] text-zinc-100">{product.name}</p>
-        <p className="mt-1 text-xs text-zinc-500">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className={cn(CHIP, "border-primary/25 bg-primary/5 text-primary")}>⚡ 自动发货</span>
+          <span className={cn(CHIP, "border-zinc-200 bg-zinc-50 text-muted-foreground")}>👤 游客可购</span>
+        </div>
+        <p className="mt-2 truncate text-[15.5px] font-semibold tracking-[-0.015em] text-foreground">{product.name}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           {tier.sub}
         </p>
         <div className="mt-auto flex items-center justify-between pt-3.5">
-          <span className="font-ark text-[22px] font-bold tracking-[0.01em] text-zinc-50 [font-variant-numeric:tabular-nums]">
-            <span className="mr-0.5 align-baseline text-[13px] font-semibold text-zinc-500">¥</span>
+          <span className="font-ark text-[22px] font-bold tracking-[0.01em] text-foreground [font-variant-numeric:tabular-nums]">
+            <span className="mr-0.5 align-baseline text-[13px] font-semibold text-muted-foreground">¥</span>
             {Number(product.price).toFixed(2)}
           </span>
           <span
             className={cn(
-              "clip-ark-sm px-4 py-1.5 text-[13px] font-semibold tracking-[0.06em] transition-[background-color,color] duration-200",
-              soldOut
-                ? "bg-white/[0.04] text-zinc-600"
-                : "bg-white/[0.08] text-zinc-100 group-hover:bg-gradient-to-br group-hover:from-[#E2725B] group-hover:to-[#C2553C] group-hover:text-white"
+              "flex h-9 items-center rounded-full px-4 text-[13px] font-semibold transition-opacity duration-200",
+              soldOut ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground group-hover:opacity-90"
             )}
           >
-            {soldOut ? "售罄" : "购买"}
+            {soldOut ? "售罄" : "购买 →"}
           </span>
         </div>
       </div>
@@ -327,8 +319,8 @@ export function StoreFront({
 
   if (categories.length === 0) {
     return (
-      <div className="py-24 text-center text-zinc-400">
-        <p className="text-2xl font-semibold tracking-tight text-zinc-100">暂无商品上架</p>
+      <div className="py-24 text-center text-muted-foreground">
+        <p className="text-2xl font-semibold tracking-tight text-foreground">暂无商品上架</p>
         <p className="mt-2 text-sm">商品准备好后会显示在这里</p>
       </div>
     )
@@ -338,36 +330,36 @@ export function StoreFront({
     <div className="relative w-full">
       <div className="relative z-10 pt-3">
         {featured && featureProduct && (
-          /* 主推位：1px 渐变描边宽卡（静态），首屏视觉锚点 */
-          <div className="mb-7 rounded-[18px] bg-[linear-gradient(120deg,rgba(226,114,91,0.55),rgba(255,255,255,0.10)_38%,rgba(160,110,255,0.45))] p-px">
-            <div className="flex flex-wrap items-center gap-x-7 gap-y-4 rounded-[17px] bg-[linear-gradient(120deg,#1C1518,#141417_55%,#16131C)] px-6 py-5 sm:px-7">
+          /* 主推位：蓝紫渐变描边宽卡，首屏视觉锚点 */
+          <div className="mb-7 rounded-2xl bg-[linear-gradient(120deg,rgba(59,130,246,0.5),rgba(139,92,246,0.35)_55%,rgba(16,185,129,0.4))] p-px">
+            <div className="flex flex-wrap items-center gap-x-7 gap-y-4 rounded-[15px] bg-card px-6 py-5 sm:px-7">
               <div
-                className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-2xl border border-[#E2725B]/30 text-4xl"
+                className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-2xl border border-primary/20 text-4xl"
                 style={{
-                  background: "radial-gradient(circle at 30% 25%, rgba(226,114,91,0.30), rgba(226,114,91,0.06) 70%)",
+                  background: "radial-gradient(circle at 30% 25%, rgba(59,130,246,0.16), rgba(59,130,246,0.04) 70%)",
                 }}
                 aria-hidden
               >
                 {productVisual(featureProduct.id).emoji}
               </div>
               <div className="min-w-0">
-                <span className="clip-ark-sm inline-block bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.1em] text-white">
+                <span className="inline-block rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-bold tracking-[0.1em] text-primary-foreground">
                   本周主推
                 </span>
-                <h3 className="mt-2 truncate text-[19px] font-extrabold tracking-[-0.025em] text-zinc-50">
+                <h3 className="mt-2 truncate text-[19px] font-extrabold tracking-[-0.025em] text-foreground">
                   {featureProduct.name}
                 </h3>
-                <p className="mt-0.5 text-[13.5px] text-zinc-400">全场主推 · 支付后自动发货</p>
+                <p className="mt-0.5 text-[13.5px] text-muted-foreground">全场主推 · 支付后自动发货</p>
               </div>
               <div className="ml-auto flex items-center gap-5">
-                <span className="font-ark text-[30px] font-bold tracking-[0.01em] text-zinc-50 [font-variant-numeric:tabular-nums]">
-                  <span className="mr-0.5 align-baseline text-[16px] font-semibold text-zinc-500">¥</span>
+                <span className="font-ark text-[30px] font-bold tracking-[0.01em] text-foreground [font-variant-numeric:tabular-nums]">
+                  <span className="mr-0.5 align-baseline text-[16px] font-semibold text-muted-foreground">¥</span>
                   {Number(featureProduct.price).toFixed(2)}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleBuyClick(featureProduct)}
-                  className="clip-ark bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-7 py-2.5 text-[14.5px] font-bold tracking-[0.06em] text-white shadow-[0_10px_34px_rgba(226,114,91,0.34)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+                  className="rounded-full bg-primary px-7 py-2.5 text-[14.5px] font-bold text-primary-foreground transition-all duration-150 hover:opacity-90 hover:shadow-[0_8px_24px_rgba(59,130,246,0.35)] active:translate-y-0"
                 >
                   抢购
                 </button>
@@ -398,7 +390,7 @@ export function StoreFront({
 
         <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
           {/* 购买弹窗：暗玻璃（去 backdrop-blur：大面积模糊在低端机上掉帧） */}
-          <DialogContent className="dialog-dark max-h-[90vh] overflow-y-auto border border-border bg-card p-0 text-card-foreground shadow-[0_30px_80px_rgba(0,0,0,0.6)] sm:max-w-md sm:rounded-[18px]">
+          <DialogContent className="max-h-[90vh] overflow-y-auto border border-border bg-card p-0 text-card-foreground shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:max-w-md sm:rounded-[18px]">
             {selectedProduct && (
               <div
                 className="relative mx-6 mt-6 h-32 overflow-hidden rounded-2xl sm:h-36"
@@ -416,7 +408,7 @@ export function StoreFront({
                 ) : (
                   <span
                     className="absolute inset-0 flex items-center justify-center text-4xl"
-                    style={{ filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.5))" }}
+                    
                     aria-hidden
                   >
                     {productVisual(selectedProduct.id).emoji}
@@ -425,12 +417,12 @@ export function StoreFront({
               </div>
             )}
             <DialogHeader className="px-6 pt-6">
-              <DialogTitle className="text-xl font-semibold tracking-tight text-zinc-50">{selectedProduct?.name}</DialogTitle>
-              <p className="text-xs text-zinc-500">{selectedProduct ? `${stockTier(Number(selectedProduct.stock)).sub} · 支付后邮箱收货` : ""}</p>
+              <DialogTitle className="text-xl font-semibold tracking-tight text-foreground">{selectedProduct?.name}</DialogTitle>
+              <p className="text-xs text-muted-foreground">{selectedProduct ? `${stockTier(Number(selectedProduct.stock)).sub} · 支付后邮箱收货` : ""}</p>
             </DialogHeader>
 
             {selectedProduct?.description && (
-              <div className="prose prose-sm prose-invert max-w-none px-6 text-zinc-400">
+              <div className="prose prose-sm max-w-none px-6 text-muted-foreground">
                 <ReactMarkdown>{selectedProduct.description}</ReactMarkdown>
               </div>
             )}
@@ -439,7 +431,7 @@ export function StoreFront({
               <div className="space-y-2">
                 <Label
                   htmlFor="email"
-                  className={cn("text-xs text-zinc-400", emailError && "text-destructive")}
+                  className={cn("text-xs text-muted-foreground", emailError && "text-destructive")}
                 >
                   接收邮箱 {emailError && <span className="ml-2 font-normal">{emailError}</span>}
                 </Label>
@@ -449,24 +441,24 @@ export function StoreFront({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="h-11 rounded-xl border border-white/10 bg-white/[0.05] text-zinc-100 shadow-none placeholder:text-zinc-500"
+                  className="h-11 rounded-xl border border-border bg-muted/50 text-foreground shadow-none placeholder:text-muted-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs text-zinc-400">数量</Label>
+                <Label className="text-xs text-muted-foreground">数量</Label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.07] text-zinc-300 transition-colors hover:bg-white/[0.12]"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted"
                     onClick={() => setQuantity((value) => Math.max(1, value - 1))}
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
-                  <span className="w-6 text-center text-[15px] font-semibold text-zinc-100 [font-variant-numeric:tabular-nums]">{quantity}</span>
+                  <span className="w-6 text-center text-[15px] font-semibold text-foreground [font-variant-numeric:tabular-nums]">{quantity}</span>
                   <button
                     type="button"
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.07] text-zinc-300 transition-colors hover:bg-white/[0.12]"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted"
                     onClick={() => setQuantity((value) => Math.min(selectedProduct?.stock || 1, value + 1))}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -475,7 +467,7 @@ export function StoreFront({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="coupon" className="text-xs text-zinc-400">
+                <Label htmlFor="coupon" className="text-xs text-muted-foreground">
                   优惠码
                 </Label>
                 <div className="flex gap-2">
@@ -486,14 +478,14 @@ export function StoreFront({
                       onChange={(e) => setCouponCode(e.target.value)}
                       placeholder="可选"
                       disabled={!!appliedCoupon}
-                      className="h-11 rounded-xl border border-white/10 bg-white/[0.05] uppercase text-zinc-100 shadow-none placeholder:text-zinc-500"
+                      className="h-11 rounded-xl border border-border bg-muted/50 uppercase text-foreground shadow-none placeholder:text-muted-foreground"
                     />
                     {appliedCoupon && <Check className="absolute right-3 top-3.5 h-4 w-4 text-emerald-400" />}
                   </div>
                   {appliedCoupon ? (
                     <Button
                       variant="secondary"
-                      className="h-11 rounded-xl border border-white/10 bg-white/[0.06] text-zinc-300 hover:bg-white/[0.12]"
+                      className="h-11 rounded-xl border border-border bg-muted/60 text-foreground hover:bg-muted"
                       onClick={() => {
                         setAppliedCoupon(null)
                         setCouponCode("")
@@ -504,7 +496,7 @@ export function StoreFront({
                   ) : (
                     <Button
                       variant="secondary"
-                      className="h-11 rounded-xl border border-white/10 bg-white/[0.06] text-zinc-300 hover:bg-white/[0.12]"
+                      className="h-11 rounded-xl border border-border bg-muted/60 text-foreground hover:bg-muted"
                       onClick={handleApplyCoupon}
                       disabled={isValidatingCoupon || !couponCode.trim()}
                     >
@@ -517,7 +509,7 @@ export function StoreFront({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs text-zinc-400">支付方式</Label>
+                <Label className="text-xs text-muted-foreground">支付方式</Label>
                 {channels.length > 0 ? (
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid gap-2">
                     {channels.map((channel) => (
@@ -525,17 +517,17 @@ export function StoreFront({
                         <RadioGroupItem value={channel.id} id={channel.id} className="peer sr-only" />
                         <Label
                           htmlFor={channel.id}
-                          className="flex cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-zinc-300 transition-colors hover:border-white/20 peer-data-[state=checked]:border-primary/50 peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary"
+                          className="flex cursor-pointer items-center justify-between rounded-xl border border-border bg-muted/50 px-4 py-3 text-foreground transition-colors hover:border-white/20 peer-data-[state=checked]:border-primary/50 peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary"
                         >
                           <span>{channel.name}</span>
                           <span className="flex items-center gap-2">
                             {Number(channel.fee ?? 0) > 0 && (
-                              <span className="text-xs text-zinc-500">+{channel.fee}%</span>
+                              <span className="text-xs text-muted-foreground">+{channel.fee}%</span>
                             )}
                             <span
                               className={cn(
                                 "h-3.5 w-3.5 rounded-full",
-                                paymentMethod === channel.id ? "bg-primary" : "border border-zinc-600"
+                                paymentMethod === channel.id ? "bg-primary" : "border border-zinc-300"
                               )}
                             />
                           </span>
@@ -544,7 +536,7 @@ export function StoreFront({
                     ))}
                   </RadioGroup>
                 ) : (
-                  <div className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-center text-xs text-destructive">
+                  <div className="rounded-xl border border-border bg-muted/50 px-4 py-3 text-center text-xs text-destructive">
                     暂无可用支付方式
                   </div>
                 )}
@@ -552,14 +544,14 @@ export function StoreFront({
 
               {paymentError && <p role="alert" className="text-sm text-destructive">{paymentError}</p>}
               <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-muted-foreground">
                   合计{feeAmount > 0 ? ` · 含手续费 ¥${feeAmount.toFixed(2)}` : ""}
                 </span>
-                <span className="text-xl font-semibold text-zinc-50 [font-variant-numeric:tabular-nums]">¥{finalTotal.toFixed(2)}</span>
+                <span className="text-xl font-semibold text-foreground [font-variant-numeric:tabular-nums]">¥{finalTotal.toFixed(2)}</span>
               </div>
               <Button
                 size="lg"
-                className="h-12 w-full rounded-xl bg-gradient-to-br from-[#E2725B] to-[#C2553C] text-base text-white shadow-[0_10px_34px_rgba(226,114,91,0.34)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+                className="h-12 w-full rounded-xl bg-primary text-base text-primary-foreground shadow-[0_10px_30px_rgba(59,130,246,0.30)] transition-all duration-150 hover:opacity-90 active:translate-y-0"
                 onClick={handlePurchase}
                 disabled={loading}
               >

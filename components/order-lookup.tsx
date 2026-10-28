@@ -64,7 +64,7 @@ export function OrderLookup() {
           订单
         </button>
       </DialogTrigger>
-      <DialogContent className="dialog-dark border border-border bg-card text-card-foreground sm:max-w-lg sm:rounded-[18px]">
+      <DialogContent className="border border-border bg-card text-card-foreground sm:max-w-lg sm:rounded-[18px]">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl font-medium tracking-tight">查找订单</DialogTitle>
           <DialogDescription>输入邮箱、手机号或订单号</DialogDescription>
@@ -75,16 +75,16 @@ export function OrderLookup() {
             placeholder="联系方式 / 订单号"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-11 rounded-xl border border-white/10 bg-white/[0.05] shadow-none placeholder:text-zinc-500"
+            className="h-11 rounded-xl border border-border bg-muted/50 shadow-none placeholder:text-muted-foreground"
           />
-          <Button type="submit" disabled={loading} className="h-11 rounded-xl bg-gradient-to-br from-[#E2725B] to-[#C2553C] px-5 text-white transition-opacity hover:opacity-90">
+          <Button type="submit" disabled={loading} className="h-11 rounded-xl bg-primary px-5 text-primary-foreground transition-opacity hover:opacity-90">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "查询"}
           </Button>
         </form>
 
         <div className="max-h-[50vh] space-y-2 overflow-y-auto px-6 pb-6">
           {hasSearched && results.length === 0 && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-10 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-border bg-muted/50 px-4 py-10 text-center text-sm text-muted-foreground">
               未找到相关订单
             </div>
           )}
@@ -96,7 +96,7 @@ export function OrderLookup() {
                 key={order.orderNo}
                 href={`/orders/${order.orderNo}`}
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.07]"
+                className="flex items-center justify-between rounded-2xl border border-border bg-muted/50 px-4 py-3 transition-colors hover:bg-muted"
               >
                 <div>
                   <p className="text-sm font-medium">{order.product.name}</p>
