@@ -141,7 +141,7 @@ const ProductCard = memo(function ProductCard({
       <div className="flex flex-1 flex-col p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className={cn(CHIP, "border-primary/25 bg-primary/5 text-primary")}>⚡ 自动发货</span>
-          <span className={cn(CHIP, "border-zinc-200 bg-zinc-50 text-muted-foreground")}>👤 游客可购</span>
+          <span className={cn(CHIP, "border-zinc-200 bg-zinc-50 text-muted-foreground")}>🔐 登录购买</span>
         </div>
         <p className="mt-2 truncate text-[15.5px] font-semibold tracking-[-0.015em] text-foreground">{product.name}</p>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -179,9 +179,7 @@ export function StoreFront({
   const [loading, setLoading] = useState(false)
   const [channels, setChannels] = useState<PaymentChannel[]>([])
   const [paymentMethod, setPaymentMethod] = useState("")
-  const [email, setEmail] = useState("")
   const [quantity, setQuantity] = useState(1)
-  const [emailError, setEmailError] = useState("")
   const [couponCode, setCouponCode] = useState("")
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -191,6 +189,7 @@ export function StoreFront({
   } | null>(null)
   const [couponError, setCouponError] = useState("")
   const [paymentError, setPaymentError] = useState("")
+  const [account, setAccount] = useState<{ email: string } | null>(null)
 
   const currentCategory = useMemo(
     () => categories.find((category) => category.id === activeCategory) ?? categories[0],
@@ -224,19 +223,20 @@ export function StoreFront({
         if (data.length > 0) setPaymentMethod(data[0].id)
       })
       .catch(console.error)
+    fetch("/api/customer/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setAccount({ email: d.email }) })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
     if (!isBuyOpen) {
-      setEmailError("")
       setCouponCode("")
       setAppliedCoupon(null)
       setCouponError("")
       setPaymentError("")
     }
   }, [isBuyOpen])
-
-  const validateEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return
@@ -276,8 +276,11 @@ export function StoreFront({
 
   const handlePurchase = async () => {
     if (!selectedProduct) return
-    if (!validateEmail(email)) {
-      setEmailError("请输入有效的邮箱地址，用于接收订单通知")
+    // 抽奖 / 积分体系：必须先登录才能下单
+    if (!account) {
+      if (confirm("下单需要先登录账户（用于发放抽奖次数与积分）。是否前往登录？")) {
+        window.location.href = "/login"
+      }
       return
     }
     if (!paymentMethod) {
@@ -285,7 +288,6 @@ export function StoreFront({
       return
     }
 
-    setEmailError("")
     setPaymentError("")
     setLoading(true)
 
@@ -297,7 +299,6 @@ export function StoreFront({
         body: JSON.stringify({
           productId: selectedProduct.id,
           quantity,
-          email,
           paymentMethod: selected?.provider || "dummy",
           couponCode: appliedCoupon?.code,
           options: { channel: paymentMethod },
@@ -429,20 +430,19 @@ export function StoreFront({
 
             <div className="space-y-4 px-6 pb-6">
               <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className={cn("text-xs text-muted-foreground", emailError && "text-destructive")}
-                >
-                  接收邮箱 {emailError && <span className="ml-2 font-normal">{emailError}</span>}
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="h-11 rounded-xl border border-border bg-muted/50 text-foreground shadow-none placeholder:text-muted-foreground"
-                />
+                {account ? (
+                  <div className="rounded-xl border border-border bg-muted/50 px-4 py-3">
+                    <p className="text-xs text-muted-foreground">收货邮箱（登录账户）</p>
+                    <p className="mt-0.5 text-[15px] font-medium text-foreground break-all">{account.email}</p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                    <p className="text-sm text-foreground">
+                      需要先 <a href="/login" className="font-semibold text-primary underline-offset-2 hover:underline">登录账户</a> 才能购买
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">登录后购买卡密即送抽奖次数，可抽积分再兑换卡密</p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

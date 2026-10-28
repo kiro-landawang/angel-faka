@@ -1,7 +1,7 @@
 import { isAuthenticated } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Package, FileText, Settings, LogOut, BookOpen, Ticket, Radio } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, FileText, Settings, LogOut, BookOpen, Ticket, Radio, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminMobileNav } from "@/components/admin-mobile-nav";
 
@@ -48,6 +48,12 @@ export default async function AdminLayout({
             <Button variant="ghost" className="w-full justify-start">
               <FileText className="mr-2 h-4 w-4" />
               订单列表
+            </Button>
+          </Link>
+          <Link href="/admin/customers">
+            <Button variant="ghost" className="w-full justify-start">
+              <Users className="mr-2 h-4 w-4" />
+              用户 / 积分
             </Button>
           </Link>
           <Link href="/admin/payments">

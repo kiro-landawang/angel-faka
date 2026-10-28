@@ -34,6 +34,9 @@ interface Product {
   sourceProductId?: string | null
   sourcePrice?: string | null
   image?: string | null
+  lotteryDraws: number
+  isRedeemable: boolean
+  redeemCost?: number | null
   _count: {
     licenses: number
   }
@@ -173,6 +176,23 @@ const ProductRow = memo(function ProductRow({
         </div>
       </TableCell>
       <TableCell>
+        <div className="flex flex-col gap-1">
+          <span className={cn(
+            "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border",
+            product.lotteryDraws > 0
+              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+              : "bg-muted text-muted-foreground border-border/50"
+          )}>
+            {product.lotteryDraws > 0 ? `赠 ${product.lotteryDraws} 抽/笔` : "不赠送"}
+          </span>
+          {product.isRedeemable && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-primary/10 text-primary border-primary/20">
+              {`兑 ${product.redeemCost ?? "?"} 分`}
+            </span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
         <Switch
           checked={product.isActive}
           onCheckedChange={() => onToggle(product.id, product.isActive)}
@@ -240,7 +260,10 @@ export default function ProductsPage() {
     deliveryFormat: "SINGLE",
     allowResale: false,
     resalePrice: "",
-    resaleMinPrice: ""
+    resaleMinPrice: "",
+    lotteryDraws: "0",
+    isRedeemable: false,
+    redeemCost: ""
   })
   const [submitError, setSubmitError] = useState("")
   const [forceDelete, setForceDelete] = useState<{ open: boolean; id: string; count: number } | null>(null)
@@ -308,7 +331,10 @@ export default function ProductsPage() {
         deliveryFormat: product.deliveryFormat || "SINGLE",
         allowResale: product.allowResale,
         resalePrice: product.resalePrice || "",
-        resaleMinPrice: product.resaleMinPrice || ""
+        resaleMinPrice: product.resaleMinPrice || "",
+        lotteryDraws: String(product.lotteryDraws ?? 0),
+        isRedeemable: product.isRedeemable || false,
+        redeemCost: product.redeemCost != null ? String(product.redeemCost) : ""
       })
     } else {
       setEditingProduct(null)
@@ -320,7 +346,10 @@ export default function ProductsPage() {
         deliveryFormat: "SINGLE",
         allowResale: false,
         resalePrice: "",
-        resaleMinPrice: ""
+        resaleMinPrice: "",
+        lotteryDraws: "0",
+        isRedeemable: false,
+        redeemCost: ""
       })
     }
     setIsDialogOpen(true)
@@ -352,7 +381,13 @@ export default function ProductsPage() {
     setSubmitLoading(true)
     const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : "/api/admin/products"
     const method = editingProduct ? "PATCH" : "POST"
-    const payload = { ...formData, name, price }
+    const payload = {
+      ...formData,
+      name,
+      price,
+      lotteryDraws: formData.lotteryDraws || "0",
+      redeemCost: formData.redeemCost || ""
+    }
 
     try {
       const res = await fetch(url, {
@@ -543,6 +578,7 @@ export default function ProductsPage() {
                 <TableHead>分类</TableHead>
                 <TableHead>价格</TableHead>
                 <TableHead>库存</TableHead>
+                <TableHead>抽奖 / 兑换</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -550,13 +586,13 @@ export default function ProductsPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center">
+                  <TableCell colSpan={7} className="h-32 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
               ) : products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                     暂无商品数据
                   </TableCell>
                 </TableRow>
@@ -747,6 +783,31 @@ export default function ProductsPage() {
                   <div className="grid gap-1"><Label className="text-xs">对接价</Label><Input type="number" min="0" step="0.01" value={formData.resalePrice} onChange={(e) => setFormData({ ...formData, resalePrice: e.target.value })} placeholder="A结算价" /></div>
                   <div className="grid gap-1"><Label className="text-xs">对外控价</Label><Input type="number" min="0" step="0.01" value={formData.resaleMinPrice} onChange={(e) => setFormData({ ...formData, resaleMinPrice: e.target.value })} placeholder="B最低售价" /></div>
                 </div>}
+
+                {/* 抽奖 / 积分 */}
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
+                  <p className="text-xs font-medium text-primary">抽奖 / 积分</p>
+                  <div className="grid gap-1">
+                    <Label className="text-xs">每笔赠送抽奖次数</Label>
+                    <Input type="number" min="0" step="1" value={formData.lotteryDraws} onChange={(e) => setFormData({ ...formData, lotteryDraws: e.target.value })} placeholder="0" />
+                    <p className="text-[10px] text-muted-foreground">顾客购买后获得的抽奖次数（×数量）。天卡建议填 1，周卡建议填 3。</p>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={formData.isRedeemable}
+                      onChange={(e) => setFormData({ ...formData, isRedeemable: e.target.checked })}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    允许用积分兑换此商品
+                  </label>
+                  {formData.isRedeemable && (
+                    <div className="grid gap-1">
+                      <Label className="text-xs">兑换所需积分</Label>
+                      <Input type="number" min="1" step="1" value={formData.redeemCost} onChange={(e) => setFormData({ ...formData, redeemCost: e.target.value })} placeholder="例如 8" />
+                    </div>
+                  )}
+                </div>
 
                 <div className="pt-4">
                    <p className="text-xs text-muted-foreground leading-relaxed">

@@ -15,6 +15,7 @@ import {
   Radio,
   Menu,
   X,
+  Users,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/admin/products", label: "商品管理", icon: ShoppingBag },
   { href: "/admin/categories", label: "分类管理", icon: Package },
   { href: "/admin/orders", label: "订单列表", icon: FileText },
+  { href: "/admin/customers", label: "用户 / 积分", icon: Users },
   { href: "/admin/payments", label: "收款监控", icon: Radio },
   { href: "/admin/coupons", label: "优惠码管理", icon: Ticket },
   { href: "/admin/articles", label: "文章管理", icon: BookOpen },

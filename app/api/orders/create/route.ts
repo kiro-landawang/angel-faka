@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getCustomerId } from "@/lib/customer-auth";
+import { ensureLotterySchema } from "@/lib/db-migrate";
 
 const log = logger.child({ module: 'OrderCreate' });
 
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
   try {
     const clientIp = getClientIP(req);
     const body = await req.json();
-    const { productId, quantity = 1, email, paymentMethod = "epay", couponCode, options } = body;
+    const { productId, quantity = 1, paymentMethod = "epay", couponCode, options } = body;
 
     // 从请求头推导当前站点真实域名，注入给支付适配器用于拼接回跳地址（payUrl）。
     // 这样在 Vercel / Netlify 等多部署环境下，payUrl 永远指向真正处理该请求的站点。
@@ -38,17 +40,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "操作过于频繁，请稍后再试" }, { status: 429 });
     }
 
-    if (!productId || !email) {
+    // 抽奖 / 积分体系：下单必须登录（账户用于累计抽奖次数与积分）
+    await ensureLotterySchema();
+    const customerId = await getCustomerId();
+    if (!customerId) {
+      return NextResponse.json({ error: "请先登录后再下单" }, { status: 401 });
+    }
+    const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) {
+      return NextResponse.json({ error: "账户不存在，请重新登录" }, { status: 401 });
+    }
+    // 订单邮箱以登录账户为准（防止绕过）
+    const orderEmail = customer.email;
+
+    if (!productId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (typeof email !== "string" || !email.includes("@")) {
-      return NextResponse.json({ error: "邮箱格式不正确" }, { status: 400 });
+    if (typeof orderEmail !== "string" || !orderEmail.includes("@")) {
+      return NextResponse.json({ error: "账户邮箱格式不正确" }, { status: 400 });
     }
 
-    const emailDomain = email.split("@")[1].toLowerCase();
+    const emailDomain = orderEmail.split("@")[1].toLowerCase();
     if (SUSPICIOUS_DOMAINS.has(emailDomain)) {
-      log.warn({ clientIp, email }, "Blocked suspicious email domain");
+      log.warn({ clientIp, email: orderEmail }, "Blocked suspicious email domain");
       return NextResponse.json({ error: "该邮箱域名无法使用" }, { status: 400 });
     }
 
@@ -189,7 +204,8 @@ export async function POST(req: Request) {
       return await tx.order.create({
         data: {
           orderNo,
-          email,
+          email: orderEmail,
+          customerId,
           productId,
           merchantId: product.merchantId,
           sourceMerchantId,

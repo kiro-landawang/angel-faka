@@ -78,6 +78,12 @@ model Product {
   resellerProducts Product[] @relation("ProductResaleSource")
 
   isActive  Boolean  @default(true)
+
+  // ---- 抽奖 / 积分体系 ----
+  lotteryDraws  Int     @default(0)     // 每购买 1 件赠送给用户的抽奖次数
+  isRedeemable Boolean @default(false)  // 是否允许用积分兑换此商品
+  redeemCost   Int?                    // 兑换所需积分（isRedeemable=true 时生效）
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -122,6 +128,11 @@ model Order {
   couponId      String?   @unique
   coupon        Coupon?   @relation(fields: [couponId], references: [id])
 
+  // 抽奖 / 积分体系：下单用户（登录后必填）
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  drawsGranted  Boolean  @default(false) // 支付成功后是否已发放抽奖次数（按订单幂等）
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -160,4 +171,45 @@ model RateLimit {
   key       String   @id
   count     Int      @default(0)
   expiresAt DateTime
+}
+
+// 前台账户（抽奖 / 积分体系）：用户注册登录后用于累计积分与抽奖次数
+model Customer {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  points        Int      @default(0)      // 当前可用积分
+  drawsAvailable Int     @default(0)      // 当前可用抽奖次数
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orders        Order[]
+  lotteryDraws  LotteryDraw[]
+  pointLedger   PointLedger[]
+}
+
+// 抽奖记录（每次抽奖一条）
+model LotteryDraw {
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  resultType    String                      // points_1 | points_2 | points_3 | egg
+  pointsAwarded Int      @default(0)        // 本次获得积分（彩蛋为随机值）
+  createdAt     DateTime @default(now())
+
+  @@index([customerId])
+}
+
+// 积分流水（每笔积分变动一条，便于后台审计与对账）
+model PointLedger {
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type          String                      // earn_draw | earn_egg | redeem | adjust
+  amount        Int                         // 正=收入，负=支出
+  balanceAfter  Int                         // 变动后余额
+  ref           String?                     // 关联单号 / 订单号 / 备注
+  createdAt     DateTime @default(now())
+
+  @@index([customerId])
 }

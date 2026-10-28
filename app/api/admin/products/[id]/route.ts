@@ -13,7 +13,7 @@ export async function PATCH(
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const { name, description, price, categoryId, isActive, deliveryFormat, allowResale, resalePrice, resaleMinPrice } = await req.json();
+    const { name, description, price, categoryId, isActive, deliveryFormat, allowResale, resalePrice, resaleMinPrice, lotteryDraws, isRedeemable, redeemCost } = await req.json();
     const { id } = params;
 
     const product = await prisma.product.update({
@@ -27,7 +27,10 @@ export async function PATCH(
         deliveryFormat,
         ...(typeof allowResale === "boolean" ? { allowResale } : {}),
         ...(resalePrice === undefined || resalePrice === "" ? {} : { resalePrice: Number(resalePrice) }),
-        ...(resaleMinPrice === undefined || resaleMinPrice === "" ? {} : { resaleMinPrice: Number(resaleMinPrice) })
+        ...(resaleMinPrice === undefined || resaleMinPrice === "" ? {} : { resaleMinPrice: Number(resaleMinPrice) }),
+        ...(lotteryDraws === undefined || lotteryDraws === "" ? {} : { lotteryDraws: Number(lotteryDraws) }),
+        ...(typeof isRedeemable === "boolean" ? { isRedeemable } : {}),
+        ...(redeemCost === undefined || redeemCost === "" ? {} : { redeemCost: Number(redeemCost) })
       }
     });
     

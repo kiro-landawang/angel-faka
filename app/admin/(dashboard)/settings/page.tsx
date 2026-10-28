@@ -66,13 +66,20 @@ const PROVIDERS = [
   {
     id: "epay",
     name: "易支付 (EPay)",
-    description: "支持支付宝、微信、QQ钱包的聚合支付接口",
+    description: "支持支付宝、微信、QQ钱包的聚合支付接口（全站主支付渠道）",
     icon: CreditCard,
     statusKey: "epay_api_url", // Keep for completeness
     enabledKey: "epay_enabled" // New key for explicit toggle
   },
   // Future providers...
 ]
+
+// 渠道默认策略：易支付缺省开启，其余渠道缺省关闭。
+function providerEnabled(cfg: Record<string, string>, id: string): boolean {
+  if (id === "epay") return cfg.epay_enabled !== "false";
+  const key = `${id}_enabled`;
+  return cfg[key] === "true";
+}
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
@@ -156,8 +163,9 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="payment" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px]">
           <TabsTrigger value="payment">支付渠道</TabsTrigger>
+          <TabsTrigger value="lottery">抽奖积分</TabsTrigger>
           <TabsTrigger value="site">站点设置</TabsTrigger>
           <TabsTrigger value="email">邮件通知</TabsTrigger>
         </TabsList>
@@ -165,7 +173,7 @@ export default function SettingsPage() {
         <TabsContent value="payment" className="space-y-4 mt-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {PROVIDERS.map((provider) => {
-              const isEnabled = config[provider.enabledKey] === "true"
+              const isEnabled = providerEnabled(config, provider.id)
               const isConfigured = !!config[provider.statusKey]
               const Icon = provider.icon
 
@@ -358,6 +366,61 @@ export default function SettingsPage() {
             </CardFooter>
           </Card>
         </TabsContent>
+
+        {/* 抽奖积分配置 */}
+        <TabsContent value="lottery" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>抽奖与积分</CardTitle>
+              <CardDescription>
+                配置「购买卡密 → 赠送抽奖次数 → 抽积分 → 积分兑换卡密」的关键参数。留空则使用默认值。
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="rounded-lg border bg-muted/20 p-4 text-xs text-muted-foreground">
+                抽奖按权重随机出 1 / 2 / 3 积分或彩蛋。权重之和不必为 100，系统会按比例换算概率。
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label>1 积分权重（默认 85）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_p1 ?? ""} onChange={(e) => handleChange("lottery_w_p1", e.target.value)} placeholder="85" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>2 积分权重（默认 8）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_p2 ?? ""} onChange={(e) => handleChange("lottery_w_p2", e.target.value)} placeholder="8" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>3 积分权重（默认 3）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_p3 ?? ""} onChange={(e) => handleChange("lottery_w_p3", e.target.value)} placeholder="3" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>彩蛋权重（默认 4）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_egg ?? ""} onChange={(e) => handleChange("lottery_w_egg", e.target.value)} placeholder="4" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>彩蛋积分下限（默认 5）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_egg_min ?? ""} onChange={(e) => handleChange("lottery_egg_min", e.target.value)} placeholder="5" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>彩蛋积分上限（默认 20）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_egg_max ?? ""} onChange={(e) => handleChange("lottery_egg_max", e.target.value)} placeholder="20" />
+                </div>
+              </div>
+              <div className="rounded-lg border bg-muted/20 p-4 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">说明：</p>
+                <p>1. 每个商品在「商品管理」里可单独设置「每笔赠送抽奖次数」。</p>
+                <p>2. 标记「可用积分兑换」的商品会出现在用户抽奖页的积分商城，兑换按「兑换所需积分」扣减。</p>
+                <p>3. 彩蛋为随机积分，落在区间 [下限, 上限] 内。</p>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                保存配置
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* CodePay Configuration Dialog */}
@@ -492,7 +555,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-muted-foreground">关闭后前台将不可见</p>
                 </div>
                 <Switch 
-                  checked={draftConfig.epay_enabled === "true"}
+                  checked={providerEnabled(draftConfig, "epay")}
                   onCheckedChange={(checked) => handleChange("epay_enabled", String(checked))}
                 />
               </div>

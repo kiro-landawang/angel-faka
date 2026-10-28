@@ -4,6 +4,8 @@ import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { ensureLotterySchema } from "@/lib/db-migrate";
+import { grantLotteryDraws } from "@/lib/lottery";
 
 // 全局(数据库级)限流：每个 IP 5 分钟内最多 60 次回调（宽松，避免误伤转发器重试）
 
@@ -48,6 +50,12 @@ async function processNotification(data: any, req?: Request) {
   if (req && !(await checkRateLimit("mianqian_notify:ip:" + clientIp, 60, 5 * 60)).allowed) {
     log.warn({ clientIp }, "Mianqian notify rate limit exceeded");
     return new NextResponse("rate limit", { status: 429 });
+  }
+
+  try {
+    await ensureLotterySchema();
+  } catch (e) {
+    log.error({ err: e instanceof Error ? e.message : "unknown" }, "ensureLotterySchema failed");
   }
 
   try {
@@ -135,8 +143,18 @@ async function processNotification(data: any, req?: Request) {
           status: "PAID",
           paymentMethod: "mianqian",
           paidAt: new Date(),
+          drawsGranted: true,
         },
       });
+
+      const granted = await grantLotteryDraws(tx, {
+        id: order.id,
+        customerId: order.customerId,
+        drawsGranted: order.drawsGranted,
+        quantity: order.quantity,
+        product: order.product,
+      });
+      if (granted > 0) log.info({ orderNo: order.orderNo, granted }, "Lottery draws granted (mianqian)");
       log.info({ orderNo: order.orderNo }, "Order fulfilled via mianqian");
     });
 

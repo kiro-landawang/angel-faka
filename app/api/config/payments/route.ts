@@ -21,6 +21,10 @@ export async function GET() {
     return acc;
   }, {} as Record<string, string>);
 
+  // 渠道默认策略：全站只走易支付（epay 缺省即视为开启；
+  // codepay / mianqian / appreciation 缺省视为关闭，需后台主动开启）。
+  const epayOn = config.epay_enabled !== "false";
+
   const channels = [];
 
   // CodePay Check (码支付个人免签)
@@ -40,7 +44,7 @@ export async function GET() {
   }
 
   // EPay Check
-  if (config.epay_enabled === "true") {
+  if (epayOn) {
     const fee = parseFloat(config.epay_fee || "0");
     const enabledSubChannels = (config.epay_channels || "alipay,wxpay").split(",");
 

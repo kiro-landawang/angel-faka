@@ -4,6 +4,8 @@ import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { ensureLotterySchema } from "@/lib/db-migrate";
+import { grantLotteryDraws } from "@/lib/lottery";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -39,6 +41,11 @@ async function processNotification(data: any, req?: Request) {
   if (req && !(await checkRateLimit("codepay_notify:ip:" + clientIp, 60, 5 * 60)).allowed) {
     log.warn({ clientIp }, "Codepay notify rate limit exceeded");
     return new NextResponse("rate limit", { status: 429 });
+  }
+  try {
+    await ensureLotterySchema();
+  } catch (e) {
+    log.error({ err: e instanceof Error ? e.message : "unknown" }, "ensureLotterySchema failed");
   }
   log.info("Received codepay callback");
 
@@ -119,9 +126,19 @@ async function processNotification(data: any, req?: Request) {
           data: {
             status: "PAID",
             paymentMethod: "codepay",
-            paidAt: new Date()
+            paidAt: new Date(),
+            drawsGranted: true
           }
         });
+
+        const granted = await grantLotteryDraws(tx, {
+          id: order.id,
+          customerId: order.customerId,
+          drawsGranted: order.drawsGranted,
+          quantity: order.quantity,
+          product: order.product,
+        });
+        if (granted > 0) log.info({ orderNo: order.orderNo, granted }, "Lottery draws granted (codepay)");
         log.info("Order successfully fulfilled via codepay");
       });
 

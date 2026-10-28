@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const { name, description, price, categoryId, deliveryFormat, allowResale = false, resalePrice, resaleMinPrice } = await req.json();
+    const { name, description, price, categoryId, deliveryFormat, allowResale = false, resalePrice, resaleMinPrice, lotteryDraws, isRedeemable = false, redeemCost } = await req.json();
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
       select: { merchantId: true },
@@ -84,7 +84,10 @@ export async function POST(req: Request) {
         deliveryFormat: deliveryFormat || "SINGLE",
         allowResale: Boolean(allowResale),
         resalePrice: resalePrice === undefined || resalePrice === "" ? null : Number(resalePrice),
-        resaleMinPrice: resaleMinPrice === undefined || resaleMinPrice === "" ? null : Number(resaleMinPrice)
+        resaleMinPrice: resaleMinPrice === undefined || resaleMinPrice === "" ? null : Number(resaleMinPrice),
+        lotteryDraws: lotteryDraws === undefined || lotteryDraws === "" ? 0 : Number(lotteryDraws),
+        isRedeemable: Boolean(isRedeemable),
+        redeemCost: redeemCost === undefined || redeemCost === "" ? null : Number(redeemCost)
       }
     });
     
