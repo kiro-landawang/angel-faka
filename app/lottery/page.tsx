@@ -26,7 +26,6 @@ export default function LotteryPage() {
   const [email, setEmail] = useState("")
   const [points, setPoints] = useState(0)
   const [draws, setDraws] = useState(0)
-  const [config, setConfig] = useState<any>(null)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [redeemables, setRedeemables] = useState<Redeemable[]>([])
 
@@ -52,7 +51,6 @@ export default function LotteryPage() {
         setEmail(d.email)
         setPoints(d.points)
         setDraws(d.drawsAvailable)
-        setConfig(d.config)
         setHistory(d.history || [])
         setRedeemables(d.redeemables || [])
       }
@@ -149,10 +147,6 @@ export default function LotteryPage() {
     )
   }
 
-  const weights = config
-    ? `1积分 ${config.w1}% · 2积分 ${config.w2}% · 3积分 ${config.w3}% · 彩蛋 ${config.wEgg}%（${config.eggMin}-${config.eggMax}积分）`
-    : ""
-
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
@@ -183,7 +177,6 @@ export default function LotteryPage() {
                 <Sparkles className="h-5 w-5 text-primary" /> 幸运抽奖
               </h2>
               <p className="mt-1 text-xs text-gray-500">购买卡密赠送的抽奖次数，抽中积分可兑换卡密</p>
-              {weights && <p className="mt-2 text-[11px] text-gray-400">{weights}</p>}
             </div>
             <div className="flex flex-col items-center">
               <button

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCustomer } from "@/lib/customer-auth";
 import { ensureLotterySchema } from "@/lib/db-migrate";
-import { getLotteryConfig } from "@/lib/lottery";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -11,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  const [history, redeemables, cfg] = await Promise.all([
+  const [history, redeemables] = await Promise.all([
     prisma.lotteryDraw.findMany({
       where: { customerId: customer.id },
       orderBy: { createdAt: "desc" },
@@ -22,14 +21,13 @@ export async function GET() {
       include: { _count: { select: { licenses: { where: { status: "AVAILABLE" } } } } },
       orderBy: { createdAt: "desc" },
     }),
-    getLotteryConfig(),
   ]);
 
+  // 不对外返回概率配置：中奖概率不再公示
   return NextResponse.json({
     email: customer.email,
     points: customer.points,
     drawsAvailable: customer.drawsAvailable,
-    config: cfg,
     history: history.map((h) => ({
       id: h.id,
       resultType: h.resultType,

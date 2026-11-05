@@ -378,39 +378,36 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="rounded-lg border bg-muted/20 p-4 text-xs text-muted-foreground">
-                抽奖按权重随机出 1 / 2 / 3 积分或彩蛋。权重之和不必为 100，系统会按比例换算概率。
+                抽奖按权重随机出 1 / 2 / 3 积分或彩蛋。权重之和不必为 100，系统会按比例换算概率。<br />
+                当前推荐（2026-11 调低版，总和恰为 100，可直接读作百分比）：1 积分 90 · 2 积分 7 · 3 积分 2 · 彩蛋 1。
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label>1 积分权重（默认 85）</Label>
-                  <Input type="number" min="0" value={draftConfig.lottery_w_p1 ?? ""} onChange={(e) => handleChange("lottery_w_p1", e.target.value)} placeholder="85" />
+                  <Label>1 积分权重（默认 90）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_p1 ?? ""} onChange={(e) => handleChange("lottery_w_p1", e.target.value)} placeholder="90" />
                 </div>
                 <div className="grid gap-2">
-                  <Label>2 积分权重（默认 8）</Label>
-                  <Input type="number" min="0" value={draftConfig.lottery_w_p2 ?? ""} onChange={(e) => handleChange("lottery_w_p2", e.target.value)} placeholder="8" />
+                  <Label>2 积分权重（默认 7）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_p2 ?? ""} onChange={(e) => handleChange("lottery_w_p2", e.target.value)} placeholder="7" />
                 </div>
                 <div className="grid gap-2">
-                  <Label>3 积分权重（默认 3）</Label>
-                  <Input type="number" min="0" value={draftConfig.lottery_w_p3 ?? ""} onChange={(e) => handleChange("lottery_w_p3", e.target.value)} placeholder="3" />
+                  <Label>3 积分权重（默认 2）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_p3 ?? ""} onChange={(e) => handleChange("lottery_w_p3", e.target.value)} placeholder="2" />
                 </div>
                 <div className="grid gap-2">
-                  <Label>彩蛋权重（默认 4）</Label>
-                  <Input type="number" min="0" value={draftConfig.lottery_w_egg ?? ""} onChange={(e) => handleChange("lottery_w_egg", e.target.value)} placeholder="4" />
+                  <Label>彩蛋权重（默认 1）</Label>
+                  <Input type="number" min="0" value={draftConfig.lottery_w_egg ?? ""} onChange={(e) => handleChange("lottery_w_egg", e.target.value)} placeholder="1" />
                 </div>
                 <div className="grid gap-2">
-                  <Label>彩蛋积分下限（默认 5）</Label>
+                  <Label>彩蛋积分（默认 5，固定值）</Label>
                   <Input type="number" min="0" value={draftConfig.lottery_egg_min ?? ""} onChange={(e) => handleChange("lottery_egg_min", e.target.value)} placeholder="5" />
-                </div>
-                <div className="grid gap-2">
-                  <Label>彩蛋积分上限（默认 20）</Label>
-                  <Input type="number" min="0" value={draftConfig.lottery_egg_max ?? ""} onChange={(e) => handleChange("lottery_egg_max", e.target.value)} placeholder="20" />
                 </div>
               </div>
               <div className="rounded-lg border bg-muted/20 p-4 text-xs text-muted-foreground space-y-1">
                 <p className="font-medium text-foreground">说明：</p>
-                <p>1. 每个商品在「商品管理」里可单独设置「每笔赠送抽奖次数」。</p>
+                <p>1. 抽奖次数只能由你在「用户管理」里手动给账户添加，付款不会自动发放。</p>
                 <p>2. 标记「可用积分兑换」的商品会出现在用户抽奖页的积分商城，兑换按「兑换所需积分」扣减。</p>
-                <p>3. 彩蛋为随机积分，落在区间 [下限, 上限] 内。</p>
+                <p>3. 彩蛋积分为固定值（默认 5 积分），不再在区间内随机。</p>
               </div>
             </CardContent>
             <CardFooter>
