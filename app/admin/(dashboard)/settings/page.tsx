@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Save, Loader2, ShieldCheck, CreditCard, Settings, CheckCircle2, AlertCircle } from "lucide-react"
+import { Save, Loader2, ShieldCheck, CreditCard, Settings, CheckCircle2, AlertCircle, Music } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -278,6 +278,38 @@ export default function SettingsPage() {
                 </div>
               </div>
               
+              <div className="pt-4 border-t space-y-4">
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Music className="h-4 w-4" /> 背景音乐
+                </h3>
+                <div className="grid gap-2">
+                  <Label>音乐地址</Label>
+                  <Input
+                    value={draftConfig.bgm_url || ""}
+                    onChange={e => handleChange("bgm_url", e.target.value)}
+                    placeholder="https://.../bgm.mp3 或 /music/bgm.mp3"
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    留空 = 关闭背景音乐。可填外链直链，或把 mp3 放进站内 <code className="rounded bg-muted px-1">public/music/bgm.mp3</code> 后这里填 <code className="rounded bg-muted px-1">/music/bgm.mp3</code>。
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label>音量（0-100）</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={draftConfig.bgm_volume ?? ""}
+                    onChange={e => handleChange("bgm_volume", e.target.value)}
+                    placeholder="35"
+                  />
+                </div>
+                <p className="rounded-md bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
+                  浏览器禁止「无交互就自动播放声音」。实际效果：访客进站会先尝试自动播放，被拦下后只要<strong>点页面任意位置</strong>就开始播；左下角有常驻开关，访客手动关掉后下次不再自动播（尊重访客）。
+                </p>
+              </div>
+
               <div className="grid gap-2 pt-4 border-t">
                 <Label>管理员账号</Label>
                 <Input
