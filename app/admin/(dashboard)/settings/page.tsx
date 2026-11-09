@@ -295,14 +295,14 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <div className="grid gap-2">
-                  <Label>音量（0-100）</Label>
+                  <Label>音量（0-100，默认 20）</Label>
                   <Input
                     type="number"
                     min="0"
                     max="100"
                     value={draftConfig.bgm_volume ?? ""}
                     onChange={e => handleChange("bgm_volume", e.target.value)}
-                    placeholder="35"
+                    placeholder="20"
                   />
                 </div>
                 <p className="rounded-md bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">

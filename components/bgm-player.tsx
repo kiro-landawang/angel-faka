@@ -21,7 +21,7 @@ interface BgmPlayerProps {
  *   2. 被拦截时挂一次性交互监听，用户第一次点页面任意位置（或按键/触摸）就开始播
  *   3. 左下角常驻开关，手动关掉后写入 localStorage，下次进来不再自动播（尊重访客意愿）
  */
-export function BgmPlayer({ src, volume = 35 }: BgmPlayerProps) {
+export function BgmPlayer({ src, volume = 20 }: BgmPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const wantPlayRef = useRef(true)
   const [playing, setPlaying] = useState(false)
@@ -36,7 +36,7 @@ export function BgmPlayer({ src, volume = 35 }: BgmPlayerProps) {
     audio.loop = true
     // 只预加载元数据：避免每个访客（哪怕从不开音乐）都被动下载整首歌
     audio.preload = "metadata"
-    audio.volume = Math.min(1, Math.max(0, (Number(volume) || 35) / 100))
+    audio.volume = Math.min(1, Math.max(0, (Number(volume) || 20) / 100))
     audioRef.current = audio
 
     let disposed = false

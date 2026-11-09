@@ -28,7 +28,7 @@ export default async function RootLayout({
 }>) {
   let crispId = undefined;
   let bgmUrl: string | undefined = undefined;
-  let bgmVolume = 35;
+  let bgmVolume = 20;
 
   try {
     const settings = await prisma.systemSetting.findMany({
