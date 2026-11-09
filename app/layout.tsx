@@ -5,8 +5,22 @@ import { prisma } from "@/lib/prisma";
 import { CustomerService } from "@/components/customer-service";
 import { BgmPlayer } from "@/components/bgm-player";
 
-/** 站内默认背景音乐（public/music/bgm.mp3）。后台「背景音乐 → 音乐地址」可覆盖或清空关闭。 */
-const DEFAULT_BGM = "/music/bgm.mp3";
+/**
+ * 站内默认背景音乐池：每次进站（服务端渲染时）随机抽一首。
+ * 后台「背景音乐 → 音乐地址」可覆盖（支持多行，同样随机抽），清空则关闭。
+ */
+const DEFAULT_BGM_LIST = ["/music/bgm.mp3", "/music/bgm2.mp3"];
+
+/** 只放行站内路径与 http(s) 直链，挡掉 javascript: 之类的脏协议 */
+function isSafeAudioUrl(url: string) {
+  return /^\/[^\s]*$/.test(url) || /^https?:\/\//i.test(url);
+}
+
+function pickRandomBgm(urls: string[]): string | undefined {
+  const valid = urls.filter(isSafeAudioUrl);
+  if (valid.length === 0) return undefined;
+  return valid[Math.floor(Math.random() * valid.length)];
+}
 
 // 方舟风几何字体（Bender 平替）：仅用于价格/编号等展示元素，构建时自托管
 const arkFont = Rajdhani({
@@ -37,22 +51,26 @@ export default async function RootLayout({
     const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
     crispId = map["crisp_id"];
 
-    // 语义：后台没配过 bgm_url → 用站内默认音乐；配了空值 → 明确关闭；配了值 → 用配置值
+    // 语义：后台没配过 bgm_url → 用站内默认音乐池；配了空值 → 明确关闭；
+    // 配了值 → 用配置值（多行/逗号分隔视为候选池，随机抽一首）
     // 注意：不能用 existsSync 检测 public/ 下的文件 —— Vercel 的 Serverless 函数里
     // 没有 public 目录（静态资源由 CDN 直出），检测会永远为 false，导致音乐不生效。
     const hasKey = Object.prototype.hasOwnProperty.call(map, "bgm_url");
-    const raw = (hasKey ? String(map["bgm_url"] ?? "") : DEFAULT_BGM).trim();
-    // 只接受站内路径或 http(s) 直链，挡掉 javascript: 之类的脏协议
-    if (raw && (/^\/[^\s]*$/.test(raw) || /^https?:\/\//i.test(raw))) {
-      bgmUrl = raw;
-    }
+    const candidates = hasKey
+      ? String(map["bgm_url"] ?? "")
+          .split(/[\n,]+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : DEFAULT_BGM_LIST;
+    bgmUrl = pickRandomBgm(candidates);
+
     const vol = Number(map["bgm_volume"]);
     if (map["bgm_volume"] !== undefined && Number.isFinite(vol) && vol >= 0 && vol <= 100) {
       bgmVolume = vol;
     }
   } catch (error) {
     console.warn("Failed to fetch site settings (likely during build):", error);
-    bgmUrl = DEFAULT_BGM;
+    bgmUrl = pickRandomBgm(DEFAULT_BGM_LIST);
   }
 
   return (

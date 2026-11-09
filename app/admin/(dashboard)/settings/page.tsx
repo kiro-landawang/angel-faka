@@ -283,15 +283,19 @@ export default function SettingsPage() {
                   <Music className="h-4 w-4" /> 背景音乐
                 </h3>
                 <div className="grid gap-2">
-                  <Label>音乐地址</Label>
-                  <Input
+                  <Label>音乐地址（可多行，随机播放其一）</Label>
+                  <Textarea
                     value={draftConfig.bgm_url || ""}
                     onChange={e => handleChange("bgm_url", e.target.value)}
-                    placeholder="https://.../bgm.mp3 或 /music/bgm.mp3"
-                    className="font-mono"
+                    placeholder="/music/bgm.mp3&#10;/music/bgm2.mp3"
+                    className="min-h-[70px] font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    留空 = 关闭背景音乐。可填外链直链，或把 mp3 放进站内 <code className="rounded bg-muted px-1">public/music/bgm.mp3</code> 后这里填 <code className="rounded bg-muted px-1">/music/bgm.mp3</code>。
+                    不填这个框时，自动随机播放站内默认音乐（已内置 2 首）。
+                    <br />
+                    想换成自己的：每行填一个地址，访客进站随机抽一首播放；可填外链直链，也可把 mp3 放进站内后填 <code className="rounded bg-muted px-1">/music/xxx.mp3</code>。
+                    <br />
+                    <strong>保存为空 = 关闭背景音乐。</strong>
                   </p>
                 </div>
                 <div className="grid gap-2">
