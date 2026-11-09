@@ -27,13 +27,15 @@ export function BgmPlayer({ src, volume = 35 }: BgmPlayerProps) {
   const [playing, setPlaying] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (!src) return
 
     const audio = new Audio(src)
     audio.loop = true
-    audio.preload = "auto"
+    // 只预加载元数据：避免每个访客（哪怕从不开音乐）都被动下载整首歌
+    audio.preload = "metadata"
     audio.volume = Math.min(1, Math.max(0, (Number(volume) || 35) / 100))
     audioRef.current = audio
 
@@ -70,8 +72,14 @@ export function BgmPlayer({ src, volume = 35 }: BgmPlayerProps) {
       if (!disposed) setPlaying(!audio.paused)
     }
 
+    // 音频地址失效 / 格式不支持时，别留一个点了没反应的按钮
+    const onError = () => {
+      if (!disposed) setFailed(true)
+    }
+
     audio.addEventListener("play", syncState)
     audio.addEventListener("pause", syncState)
+    audio.addEventListener("error", onError)
 
     void start()
 
@@ -86,6 +94,7 @@ export function BgmPlayer({ src, volume = 35 }: BgmPlayerProps) {
       window.removeEventListener("touchstart", onGesture)
       audio.removeEventListener("play", syncState)
       audio.removeEventListener("pause", syncState)
+      audio.removeEventListener("error", onError)
       audio.pause()
       audio.src = ""
       audioRef.current = null
@@ -127,7 +136,7 @@ export function BgmPlayer({ src, volume = 35 }: BgmPlayerProps) {
     }
   }, [])
 
-  if (!src) return null
+  if (!src || failed) return null
 
   return (
     <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2">
