@@ -6,10 +6,27 @@ import { Music2, VolumeX } from "lucide-react"
 const STORAGE_KEY = "angel_bgm_off"
 
 interface BgmPlayerProps {
-  /** 音乐地址：站内路径（/music/bgm.mp3）或外链直链；留空则不启用 */
-  src?: string | null
+  /**
+   * 候选音乐地址列表：每次进站由**访客端**随机抽一首。
+   *
+   * 为什么随机必须放在客户端：首页 HTML 会被 Vercel CDN 缓存
+   * （实测响应头 `X-Vercel-Cache: STALE` / `Age: 32`），服务端 `Math.random()`
+   * 的结果一旦被缓存固化，所有访客在缓存有效期内听到的都是同一首。
+   * 放在 `useEffect` 里跑，每次真实进站都会重新抽。
+   */
+  srcs?: string[]
   /** 音量 0-100（移动端 Safari 会忽略，跟随系统音量） */
   volume?: number
+}
+
+/** 只放行站内路径与 http(s) 直链，挡掉 javascript: 之类的脏协议 */
+function isSafeAudioUrl(url: string) {
+  return /^\/[^\s]*$/.test(url) || /^https?:\/\//i.test(url)
+}
+
+function pickRandom(list: string[]): string | undefined {
+  if (list.length === 0) return undefined
+  return list[Math.floor(Math.random() * list.length)]
 }
 
 /**
@@ -21,18 +38,29 @@ interface BgmPlayerProps {
  *   2. 被拦截时挂一次性交互监听，用户第一次点页面任意位置（或按键/触摸）就开始播
  *   3. 左下角常驻开关，手动关掉后写入 localStorage，下次进来不再自动播（尊重访客意愿）
  */
-export function BgmPlayer({ src, volume = 20 }: BgmPlayerProps) {
+export function BgmPlayer({ srcs, volume = 20 }: BgmPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const wantPlayRef = useRef(true)
   const [playing, setPlaying] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [showHint, setShowHint] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [enabled, setEnabled] = useState(false)
+
+  // 依赖用字符串而不是数组：父组件每次渲染都会给新数组引用，
+  // 直接依赖数组会让 effect 无限重建 audio 元素（音乐不断从头开始）。
+  const srcKey = (srcs ?? []).join("\n")
 
   useEffect(() => {
-    if (!src) return
+    const candidates = srcKey ? srcKey.split("\n").filter(isSafeAudioUrl) : []
+    const chosen = pickRandom(candidates)
+    if (!chosen) {
+      setEnabled(false)
+      return
+    }
+    setEnabled(true)
 
-    const audio = new Audio(src)
+    const audio = new Audio(chosen)
     audio.loop = true
     // 只预加载元数据：避免每个访客（哪怕从不开音乐）都被动下载整首歌
     audio.preload = "metadata"
@@ -99,7 +127,7 @@ export function BgmPlayer({ src, volume = 20 }: BgmPlayerProps) {
       audio.src = ""
       audioRef.current = null
     }
-  }, [src, volume])
+  }, [srcKey, volume])
 
   // 提示条 8 秒后自动消失，避免一直挂着碍眼
   useEffect(() => {
@@ -136,7 +164,7 @@ export function BgmPlayer({ src, volume = 20 }: BgmPlayerProps) {
     }
   }, [])
 
-  if (!src || failed) return null
+  if (!enabled || failed) return null
 
   return (
     <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2">

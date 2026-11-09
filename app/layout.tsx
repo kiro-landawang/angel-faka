@@ -6,21 +6,14 @@ import { CustomerService } from "@/components/customer-service";
 import { BgmPlayer } from "@/components/bgm-player";
 
 /**
- * 站内默认背景音乐池：每次进站（服务端渲染时）随机抽一首。
+ * 站内默认背景音乐池：每次进站随机抽一首。
  * 后台「背景音乐 → 音乐地址」可覆盖（支持多行，同样随机抽），清空则关闭。
+ *
+ * 注意：随机发生在客户端（components/bgm-player.tsx），这里只负责把候选池传下去。
+ * 原因是首页 HTML 会被 Vercel CDN 缓存，服务端 Math.random() 的结果会被缓存固化，
+ * 实测缓存有效期内所有访客听到的都是同一首。
  */
 const DEFAULT_BGM_LIST = ["/music/bgm.mp3", "/music/bgm2.mp3"];
-
-/** 只放行站内路径与 http(s) 直链，挡掉 javascript: 之类的脏协议 */
-function isSafeAudioUrl(url: string) {
-  return /^\/[^\s]*$/.test(url) || /^https?:\/\//i.test(url);
-}
-
-function pickRandomBgm(urls: string[]): string | undefined {
-  const valid = urls.filter(isSafeAudioUrl);
-  if (valid.length === 0) return undefined;
-  return valid[Math.floor(Math.random() * valid.length)];
-}
 
 // 方舟风几何字体（Bender 平替）：仅用于价格/编号等展示元素，构建时自托管
 const arkFont = Rajdhani({
@@ -41,7 +34,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let crispId = undefined;
-  let bgmUrl: string | undefined = undefined;
+  let bgmSrcs: string[] = [];
   let bgmVolume = 20;
 
   try {
@@ -52,17 +45,16 @@ export default async function RootLayout({
     crispId = map["crisp_id"];
 
     // 语义：后台没配过 bgm_url → 用站内默认音乐池；配了空值 → 明确关闭；
-    // 配了值 → 用配置值（多行/逗号分隔视为候选池，随机抽一首）
+    // 配了值 → 用配置值（多行/逗号分隔视为候选池，客户端随机抽一首）
     // 注意：不能用 existsSync 检测 public/ 下的文件 —— Vercel 的 Serverless 函数里
     // 没有 public 目录（静态资源由 CDN 直出），检测会永远为 false，导致音乐不生效。
     const hasKey = Object.prototype.hasOwnProperty.call(map, "bgm_url");
-    const candidates = hasKey
+    bgmSrcs = hasKey
       ? String(map["bgm_url"] ?? "")
           .split(/[\n,]+/)
           .map((s) => s.trim())
           .filter(Boolean)
       : DEFAULT_BGM_LIST;
-    bgmUrl = pickRandomBgm(candidates);
 
     const vol = Number(map["bgm_volume"]);
     if (map["bgm_volume"] !== undefined && Number.isFinite(vol) && vol >= 0 && vol <= 100) {
@@ -70,7 +62,7 @@ export default async function RootLayout({
     }
   } catch (error) {
     console.warn("Failed to fetch site settings (likely during build):", error);
-    bgmUrl = pickRandomBgm(DEFAULT_BGM_LIST);
+    bgmSrcs = DEFAULT_BGM_LIST;
   }
 
   return (
@@ -78,7 +70,7 @@ export default async function RootLayout({
       <body className="bg-background text-foreground" style={{ fontFamily: 'Inter, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif' }}>
         {children}
         <CustomerService crispId={crispId} />
-        <BgmPlayer src={bgmUrl} volume={bgmVolume} />
+        <BgmPlayer srcs={bgmSrcs} volume={bgmVolume} />
       </body>
     </html>
   );
