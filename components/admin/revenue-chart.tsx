@@ -15,8 +15,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
       axisPointer: {
         type: 'shadow'
       },
-      backgroundColor: 'rgba(24, 24, 27, 0.9)',
-      borderColor: 'rgba(168, 85, 247, 0.2)',
+      backgroundColor: 'rgba(24, 24, 27, 0.92)',
+      borderColor: 'rgba(24, 24, 27, 0.2)',
       textStyle: {
         color: '#fff'
       }
@@ -36,7 +36,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
       },
       axisLine: {
         lineStyle: {
-          color: 'rgba(255, 255, 255, 0.1)'
+          color: 'rgba(24, 24, 27, 0.12)'
         }
       },
       axisLabel: {
@@ -48,7 +48,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
       type: 'value',
       splitLine: {
         lineStyle: {
-          color: 'rgba(255, 255, 255, 0.05)',
+          color: 'rgba(24, 24, 27, 0.06)',
           type: 'dashed'
         }
       },
@@ -65,14 +65,14 @@ export function RevenueChart({ data }: RevenueChartProps) {
         data: data.map(item => item.amount),
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(168, 85, 247, 0.8)' },
-            { offset: 1, color: 'rgba(168, 85, 247, 0.3)' }
+            { offset: 0, color: 'rgba(24, 24, 27, 0.78)' },
+            { offset: 1, color: 'rgba(24, 24, 27, 0.30)' }
           ]),
           borderRadius: [4, 4, 0, 0]
         },
         emphasis: {
           itemStyle: {
-            color: 'rgba(168, 85, 247, 1)'
+            color: 'rgba(24, 24, 27, 0.95)'
           }
         }
       },
@@ -83,14 +83,12 @@ export function RevenueChart({ data }: RevenueChartProps) {
         showSymbol: false,
         data: data.map(item => item.amount),
         lineStyle: {
-          color: '#a855f7',
-          width: 2,
-          shadowBlur: 10,
-          shadowColor: 'rgba(168, 85, 247, 0.5)'
+          color: '#18181b',
+          width: 2
         },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(168, 85, 247, 0.1)' },
+            { offset: 0, color: 'rgba(24, 24, 27, 0.08)' },
             { offset: 1, color: 'transparent' }
           ])
         }

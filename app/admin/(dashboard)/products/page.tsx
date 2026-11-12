@@ -535,7 +535,7 @@ export default function ProductsPage() {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">商品管理</h1>
+          <h1 className="text-xl font-bold tracking-tight">商品管理</h1>
           <p className="text-muted-foreground">创建、编辑商品并管理库存</p>
         </div>
         <div className="flex items-center gap-2">
@@ -561,7 +561,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+      <div className="rounded-lg border bg-card flex-1 flex flex-col overflow-hidden">
         {loadError && (
           <div role="alert" className="m-4 mb-0 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {loadError}

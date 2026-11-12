@@ -186,7 +186,7 @@ export default function CouponsPage() {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex justify-between items-center shrink-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">优惠码管理</h1>
+          <h1 className="text-xl font-bold tracking-tight">优惠码管理</h1>
           <p className="text-muted-foreground">创建通用、分类或指定商品的折扣券（支持一次性 / 无限使用）</p>
         </div>
         <Button onClick={() => { setEditingCoupon(null); setIsOpen(true); }}>
@@ -194,7 +194,7 @@ export default function CouponsPage() {
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+      <div className="rounded-lg border bg-card flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
@@ -251,7 +251,7 @@ export default function CouponsPage() {
                           无限使用 · 已用 {coupon.usedCount || 0} 次
                         </Badge>
                       ) : (coupon.isUsed || (coupon.usedCount || 0) >= coupon.usageLimit) ? (
-                        <Badge variant="secondary" className="bg-zinc-800 text-zinc-500 border-zinc-700">
+                        <Badge variant="secondary" className="bg-secondary text-muted-foreground border-border">
                           已使用 ({coupon.usedCount || 0}/{coupon.usageLimit}){coupon.order?.orderNo ? ` · ${coupon.order.orderNo}` : ""}
                         </Badge>
                       ) : (

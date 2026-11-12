@@ -47,9 +47,17 @@ export default function OrdersPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
 
+  // 挂载时读一次 URL ?search=（顶栏搜索框跳转进来时预填并直接查询）
   useEffect(() => {
-    fetchOrders(1)
+    const q = new URLSearchParams(window.location.search).get("search")?.trim() || ""
+    if (q) {
+      setSearch(q)
+      fetchOrders(1, q)
+    } else {
+      fetchOrders(1)
+    }
     fetchProducts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Refetch when filters change, resetting to page 1
@@ -186,7 +194,7 @@ export default function OrdersPage() {
       <div className="flex flex-col gap-4 shrink-0">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">订单管理</h1>
+            <h1 className="text-xl font-bold tracking-tight">订单管理</h1>
             <p className="text-muted-foreground">查看流水与补单操作</p>
           </div>
         </div>
@@ -232,7 +240,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+      <div className="rounded-lg border bg-card flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">

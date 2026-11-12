@@ -1,8 +1,7 @@
 import { isAuthenticated } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Package, FileText, Settings, LogOut, BookOpen, Ticket, Radio, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { prisma } from "@/lib/prisma";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { AdminMobileNav } from "@/components/admin-mobile-nav";
 
 export default async function AdminLayout({
@@ -11,92 +10,26 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const isAuth = await isAuthenticated();
-  
+
+  // 待支付订单数：侧边栏角标 + 顶栏通知红点共用
+  let pendingCount = 0;
+  if (isAuth) {
+    try {
+      pendingCount = await prisma.order.count({ where: { status: "PENDING" } });
+    } catch {
+      pendingCount = 0;
+    }
+  }
+
   return (
-    <div className="flex h-screen flex-col md:flex-row bg-background dark text-foreground overflow-hidden">
-      {/* Desktop Sidebar */}
-      <aside className="hidden w-64 flex-col border-r bg-background md:flex shrink-0">
-        <div className="flex h-14 items-center border-b px-6 font-bold text-lg">
-          GeekFaka Admin
-        </div>
-        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-          <Link href="/admin">
-            <Button variant="ghost" className="w-full justify-start">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              仪表盘
-            </Button>
-          </Link>
-          <Link href="/admin/merchants">
-            <Button variant="ghost" className="w-full justify-start">
-              <Package className="mr-2 h-4 w-4" />
-              商户管理
-            </Button>
-          </Link>
-          <Link href="/admin/products">
-            <Button variant="ghost" className="w-full justify-start">
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              商品管理
-            </Button>
-          </Link>
-          <Link href="/admin/categories">
-            <Button variant="ghost" className="w-full justify-start">
-              <Package className="mr-2 h-4 w-4" />
-              分类管理
-            </Button>
-          </Link>
-          <Link href="/admin/orders">
-            <Button variant="ghost" className="w-full justify-start">
-              <FileText className="mr-2 h-4 w-4" />
-              订单列表
-            </Button>
-          </Link>
-          <Link href="/admin/customers">
-            <Button variant="ghost" className="w-full justify-start">
-              <Users className="mr-2 h-4 w-4" />
-              用户 / 积分
-            </Button>
-          </Link>
-          <Link href="/admin/payments">
-            <Button variant="ghost" className="w-full justify-start">
-              <Radio className="mr-2 h-4 w-4" />
-              收款监控
-            </Button>
-          </Link>
-          <Link href="/admin/coupons">
-            <Button variant="ghost" className="w-full justify-start">
-              <Ticket className="mr-2 h-4 w-4" />
-              优惠码管理
-            </Button>
-          </Link>
-          <Link href="/admin/articles">
-            <Button variant="ghost" className="w-full justify-start">
-              <BookOpen className="mr-2 h-4 w-4" />
-              文章管理
-            </Button>
-          </Link>
-          <Link href="/admin/settings">
-            <Button variant="ghost" className="w-full justify-start">
-              <Settings className="mr-2 h-4 w-4" />
-              系统设置
-            </Button>
-          </Link>
-        </nav>
-        <div className="border-t p-4 shrink-0">
-          <a href="/api/admin/logout"> 
-             <Button variant="outline" className="w-full">
-               <LogOut className="mr-2 h-4 w-4" /> 退出登录
-             </Button>
-          </a>
-        </div>
-      </aside>
-
-      {/* Mobile navigation (top bar + drawer), desktop keeps the sidebar above */}
-      <AdminMobileNav />
-
-      {/* Main Content */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        {children}
-      </main>
+    // admin-shell：后台「极简白」主题作用域（globals.css），前台不受影响
+    <div className="admin-shell flex h-screen flex-col bg-background text-foreground md:flex-row">
+      <AdminSidebar pendingCount={pendingCount} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AdminTopbar pendingCount={pendingCount} />
+        <AdminMobileNav pendingCount={pendingCount} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+      </div>
     </div>
   );
 }

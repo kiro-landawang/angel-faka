@@ -140,6 +140,60 @@
   color-scheme: dark;
 }
 
+/* ------------------------------------------------------------------
+ * 后台「极简白」主题（2026-11-12 改版，方案 A）
+ * 作用域：admin-shell 挂在后台布局根元素上；body:has() 这份是为了
+ * 覆盖 Radix Dialog 等 portal 到 body 的弹层 —— CSS 自定义属性沿 DOM
+ * 树继承，body 上有这套 token，弹层内组件自动跟随后台配色。
+ * :has() 不支持时弹层回退到 :root 的蓝色系，仅老浏览器受影响。
+ * ------------------------------------------------------------------ */
+.admin-shell,
+body:has(.admin-shell) {
+  --background: 240 5% 97%;        /* #f7f7f8 */
+  --foreground: 240 6% 10%;        /* #18181b */
+  --card: 0 0% 100%;
+  --card-foreground: 240 6% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 6% 10%;
+  --primary: 240 6% 10%;           /* 近黑强调色（方案 A 的核心） */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 5% 94%;
+  --secondary-foreground: 240 6% 10%;
+  --muted: 240 5% 95%;
+  --muted-foreground: 240 4% 46%;  /* #71717a */
+  --accent: 240 5% 94%;
+  --accent-foreground: 240 6% 10%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 6% 90%;
+  --input: 240 6% 90%;
+  --ring: 240 6% 10%;
+  --radius: 0.625rem;
+  color-scheme: light;
+}
+
+/* 后台侧边栏菜单项（分组导航） */
+.admin-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  margin-bottom: 2px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  color: hsl(240 4% 46%);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.admin-menu-item:hover {
+  background: hsl(240 5% 94%);
+  color: hsl(240 6% 10%);
+}
+.admin-menu-item.active {
+  background: hsl(240 5% 94%);
+  color: hsl(240 6% 10%);
+  font-weight: 600;
+}
+
 /* Flowing rainbow text used by the storefront promo banner */
 @keyframes rainbow-pan {
   0% {

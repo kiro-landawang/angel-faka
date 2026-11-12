@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Lock, Loader2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 
 function getDeviceId() {
   const key = "angel-faka-device-id"
@@ -46,7 +46,7 @@ export default function AdminLogin() {
         router.push("/admin")
         router.refresh()
       } else {
-        setError(`${data.error || "登录失败"} (账号长度:${cleanUsername.length} 密码长度:${cleanPassword.length})`)
+        setError(data.error || "登录失败，请检查账号、密码或令牌")
         setLoading(false)
       }
     } catch {
@@ -62,13 +62,13 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-sm bg-background/95 backdrop-blur">
+    <div className="admin-shell flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Lock className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
+            A
           </div>
-          <CardTitle className="text-2xl">管理员登录</CardTitle>
+          <CardTitle className="text-xl">ANGEL 发卡 · 管理后台</CardTitle>
           <CardDescription>请输入账号、密码和认证令牌</CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>

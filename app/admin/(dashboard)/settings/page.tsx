@@ -158,7 +158,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">系统设置</h1>
+        <h1 className="text-xl font-bold tracking-tight">系统设置</h1>
         <p className="text-muted-foreground">管理支付渠道与站点参数</p>
       </div>
 

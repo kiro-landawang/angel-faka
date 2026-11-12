@@ -113,7 +113,7 @@ export default function ArticlesPage() {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex justify-between items-center shrink-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">文章管理</h1>
+          <h1 className="text-xl font-bold tracking-tight">文章管理</h1>
           <p className="text-muted-foreground">发布教程、公告或协议页面</p>
         </div>
         <Button onClick={() => { setEditingArticle(null); setIsOpen(true); }}>
@@ -121,7 +121,7 @@ export default function ArticlesPage() {
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+      <div className="rounded-lg border bg-card flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
