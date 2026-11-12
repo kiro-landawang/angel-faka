@@ -141,14 +141,14 @@ const ProductRow = memo(function ProductRow({
             </div>
           )}
           <div className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-xl font-black text-slate-50 tracking-tight drop-shadow-sm leading-tight">
+            <span className="text-[15px] font-semibold text-foreground tracking-tight leading-tight">
               {product.name}
             </span>
             <div className="flex items-center gap-2">
               <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
                 ID: {product.id}
               </code>
-              <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
+              <span className="text-xs text-muted-foreground line-clamp-1 font-medium">
                 {product.description || "暂无描述"}
               </span>
             </div>
