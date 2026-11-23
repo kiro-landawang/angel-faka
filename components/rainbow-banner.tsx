@@ -6,7 +6,7 @@ interface RainbowBannerProps {
 // Renders the text with a flowing rainbow gradient (see `.rainbow-text` in globals.css).
 export function RainbowBanner({ text }: RainbowBannerProps) {
   const message =
-    text ?? "批卡优惠力度大！！！无门槛入代dd  TG：@PdanKing"
+    text ?? "批卡优惠力度大！！！无门槛入代dd"
 
   return (
     <div className="mx-auto mb-4 w-full max-w-3xl">

@@ -276,7 +276,7 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
     }
   }
 
-  // 卡密购买成功后弹窗：提示把订单号发给皮蛋手动加抽奖次数（每个订单只弹一次）
+  // 卡密购买成功后弹窗：提示把订单号发给在线客服手动加抽奖次数（每个订单只弹一次）
   useEffect(() => {
     if (order?.status === "PAID") {
       try {
@@ -460,8 +460,8 @@ function OrderPageInner({ params }: { params: { orderNo: string } }) {
           </DialogHeader>
           <div className="space-y-3 text-sm text-gray-700">
             <p>
-              加抽奖次数请把下方<strong>订单号</strong>发给皮蛋（TG：
-              <span className="font-medium text-primary">@PdanKing</span>），由皮蛋手动为你添加。
+              加抽奖次数请把下方<strong>订单号</strong>发给
+              <span className="font-medium text-primary">在线客服</span>，由管理员手动为你添加。
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 break-all rounded-md border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-900">

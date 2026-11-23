@@ -47,8 +47,7 @@ export function Announcement({ content }: AnnouncementProps) {
       <div className="flex items-center gap-2.5 pt-4 text-[13.5px] text-muted-foreground">
         <span aria-hidden>📢</span>
         <span className="truncate">
-          支付完成立即自动发卡 · 有问题联系{" "}
-          <b className="font-semibold text-primary">TG @PdanKing</b>
+          支付完成立即自动发卡 · 有问题联系在线客服
         </span>
         {content && (
           <button
