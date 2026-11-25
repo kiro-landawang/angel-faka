@@ -1,4 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node scripts/prepare-netlify.mjs && npx prisma generate && npx next build"
+  "buildCommand": "node scripts/prepare-netlify.mjs && npx prisma generate && npx next build",
+  "regions": ["hkg1"]
 }
