@@ -1,0 +1,33 @@
+# Neon 免费版闲置 5 分钟会自动休眠（免费计划不可关闭），
+# 第一个赶上休眠的访客/管理员要等数据库唤醒（实测最长 30 秒以上）。
+# 本工作流在低流量时段（北京时间 01:00-12:00）每 5 分钟戳一次数据库接口，
+# 让 Neon 全程保持活跃。带随机参数绕过边缘缓存，确保真正打到数据库。
+#
+# 额度核算：0.25 CU × 11 小时/天 × 30 天 ≈ 82.5 CU-小时/月，
+# 在 Neon 免费版 100 CU-小时/月的额度内，不会超限。
+# 白天/晚高峰的真实访客流量会自然唤醒数据库，无需保活。
+#
+# 注意：GitHub 定时任务可能有几分钟延迟；仓库 60 天无推送会被停用定时任务。
+
+name: Neon keepalive
+
+on:
+  schedule:
+    # UTC 17-23 点 = 北京时间 01:00-07:55
+    - cron: "*/5 17-23 * * *"
+    # UTC 0-3 点 = 北京时间 08:00-11:55
+    - cron: "*/5 0-3 * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake database
+        run: |
+          ts="$(date +%s)-$RANDOM"
+          code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 \
+            "https://kiro.pdan.top/api/products/cmt3zhp560001qeskp1ydh0yk/image?keepalive=${ts}")"
+          echo "keepalive ping -> HTTP ${code}"
